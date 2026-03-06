@@ -3,23 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CBT PRO - Login</title>
+    <title id="web-title">SENSEI CBT - Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
-    <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md text-center border-t-8 border-blue-900">
-        <img id="display-logo" src="" class="w-24 mx-auto mb-4">
-        <h2 id="display-nama" class="text-2xl font-black text-blue-900">MEMUAT...</h2>
-        <p id="display-judul" class="text-slate-500 text-sm mb-8 uppercase tracking-widest font-bold"></p>
-        
+    <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md border-t-8 border-blue-900 text-center">
+        <img id="display-logo" src="https://via.placeholder.com/100" class="h-20 mx-auto mb-4 object-contain">
+        <h2 id="display-nama-sekolah" class="text-blue-900 font-black text-xl uppercase">NAMA SEKOLAH</h2>
+        <p id="display-judul-app" class="text-slate-500 text-sm mb-8 font-medium">APLIKASI UJIAN</p>
+
         <div class="space-y-4 text-left">
-            <input type="text" id="user" class="w-full px-4 py-3 rounded-xl border-2 outline-none focus:border-blue-600" placeholder="Username">
-            <input type="password" id="pass" class="w-full px-4 py-3 rounded-xl border-2 outline-none focus:border-blue-600" placeholder="Password">
-            <button onclick="login()" class="w-full bg-blue-900 text-white font-black py-4 rounded-2xl shadow-lg">MASUK</button>
+            <input type="text" id="username" class="w-full px-4 py-3 rounded-xl border-2 border-slate-100 outline-none focus:border-blue-500" placeholder="Username">
+            <div class="relative">
+                <input type="password" id="password" class="w-full px-4 py-3 rounded-xl border-2 border-slate-100 outline-none focus:border-blue-500" placeholder="Password">
+                <button onclick="togglePass()" class="absolute right-4 top-3.5 text-slate-400">👁️</button>
+            </div>
+            <button onclick="login()" class="w-full bg-blue-900 text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-blue-800 transition-all">MASUK</button>
         </div>
+        <p class="mt-8 text-[10px] text-slate-300 font-bold tracking-widest uppercase">Powered by SENSEI</p>
     </div>
 
 <script>
@@ -30,19 +35,40 @@
     db.ref('pengaturan').on('value', snap => {
         const d = snap.val();
         if(d) {
-            document.getElementById('display-nama').innerText = d.nama_sekolah;
-            document.getElementById('display-judul').innerText = d.judul_app;
+            document.getElementById('display-nama-sekolah').innerText = d.nama_sekolah;
+            document.getElementById('display-judul-app').innerText = d.judul_app;
             document.getElementById('display-logo').src = d.logo_url;
+            document.title = d.judul_app;
         }
     });
 
+    function togglePass() {
+        const p = document.getElementById('password');
+        p.type = p.type === "password" ? "text" : "password";
+    }
+
     function login() {
-        const u = document.getElementById('user').value, p = document.getElementById('pass').value;
+        const u = document.getElementById('username').value.trim();
+        const p = document.getElementById('password').value.trim();
+        if(!u || !p) return Swal.fire('Opps','Isi semua field','warning');
+
         db.ref('siswa').once('value', snap => {
-            let found = null;
-            snap.forEach(c => { const d = c.val(); if(d.username == u && d.sandi == p) found = d; });
-            if(found) { sessionStorage.setItem('siswa_aktif', JSON.stringify(found)); window.location.href="ujian.html"; }
-            else { Swal.fire('Error','User/Pass Salah','error'); }
+            let userFound = null;
+            snap.forEach(child => {
+                const d = child.val();
+                if(String(d.username) === u && String(d.sandi) === p) userFound = d;
+            });
+
+            if(userFound) {
+                if(userFound.status === 'blokir') {
+                    Swal.fire('AKUN DIBLOKIR','Anda terdeteksi curang! Hubungi Admin.','error');
+                } else {
+                    sessionStorage.setItem('siswa_aktif', JSON.stringify(userFound));
+                    window.location.href = "ujian.html";
+                }
+            } else {
+                Swal.fire('Gagal','User/Password salah','error');
+            }
         });
     }
 </script>
