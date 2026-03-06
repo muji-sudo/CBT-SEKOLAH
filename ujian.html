@@ -12,6 +12,7 @@
         body { font-family: 'Inter', sans-serif; -webkit-user-select: none; user-select: none; }
         .option-card { border: 2px solid #f1f5f9; cursor: pointer; transition: 0.2s; }
         input:checked + .option-content { color: #1e40af; font-weight: 700; }
+        .soal-gambar { max-width: 100%; max-height: 300px; border-radius: 12px; margin-bottom: 1rem; border: 1px solid #e2e8f0; display: block; margin-left: auto; margin-right: auto; }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen">
@@ -19,7 +20,7 @@
     <div id="box-curang" class="hidden fixed inset-0 bg-red-600 z-[9999] flex flex-col items-center justify-center text-white p-6 text-center">
         <h1 class="text-5xl font-black mb-4">STOP!</h1>
         <p id="teks-curang" class="text-2xl font-bold mb-8"></p>
-        <button onclick="keluarSistem()" class="bg-white text-red-600 font-bold py-3 px-8 rounded-xl">Kembali Login</button>
+        <button onclick="keluarSistem()" class="bg-white text-red-600 font-bold py-3 px-8 rounded-xl shadow-lg">Kembali Login</button>
     </div>
 
     <div id="modal-kumpul" class="hidden fixed inset-0 bg-black/50 z-[9000] flex items-center justify-center p-4">
@@ -54,6 +55,7 @@
             <div id="box-soal" class="hidden mt-4">
                 <div class="bg-white rounded-2xl shadow-lg p-6 border border-slate-200">
                     <div class="mb-4 font-bold text-slate-400">SOAL <span id="no-skrg" class="text-blue-600 text-xl">1</span></div>
+                    <div id="container-gambar"></div>
                     <div id="soal-teks" class="text-lg text-slate-800 mb-6 leading-relaxed"></div>
                     <div id="opsi-list" class="space-y-3"></div>
                 </div>
@@ -83,17 +85,28 @@
     if(!siswa) window.location.href="index.html";
     document.getElementById('n-siswa').innerText = siswa.nama;
 
+    // CEK STATUS BLOKIR REALTIME DARI ADMIN
+    db.ref('siswa/' + siswa.key).on('value', snap => {
+        const d = snap.val();
+        if(d && d.status === "blokir") {
+            isExamActive = false;
+            document.getElementById('wrapper-ujian').classList.add('hidden');
+            document.getElementById('box-curang').classList.remove('hidden');
+            document.getElementById('teks-curang').innerText = "Akun Anda telah diblokir oleh Admin.";
+        }
+    });
+
     let soalData = [], index = 0, paket = null, jawabanUser = {}, isExamActive = false;
 
     db.ref('pengaturan').on('value', snap => {
         const d = snap.val();
-        if(d) document.getElementById('teks-curang').innerText = d.pesan_curang || "Anda terindikasi curang!";
+        if(d) document.getElementById('teks-curang').innerText = d.pesan_curang || "Terdeteksi Curang!";
     });
 
-    // SISTEM ANTI CURANG
     function periksaKecurangan() {
         if (isExamActive) {
             isExamActive = false;
+            db.ref('siswa/' + siswa.key).update({ status: "curang" });
             document.getElementById('wrapper-ujian').classList.add('hidden');
             document.getElementById('box-curang').classList.remove('hidden');
         }
@@ -114,6 +127,7 @@
     });
 
     function startNow() {
+        if(!paket) return Swal.fire('Informasi','Belum ada jadwal ujian hari ini','info');
         isExamActive = true;
         document.getElementById('box-start').classList.add('hidden');
         document.getElementById('box-soal').classList.remove('hidden');
@@ -126,25 +140,30 @@
         const s = soalData[index];
         document.getElementById('no-skrg').innerText = index + 1;
         document.getElementById('soal-teks').innerText = s.pertanyaan;
+        
+        // Render Gambar jika kolom 'gambar' di excel terisi URL
+        const imgCont = document.getElementById('container-gambar');
+        imgCont.innerHTML = (s.gambar) ? `<img src="${s.gambar}" class="soal-gambar">` : "";
+
         let h = "";
         ['a','b','c','d','e'].forEach(o => {
             const txt = s['opsi_'+o];
             if(txt) {
                 const checked = (jawabanUser[index] == o) ? 'checked' : '';
-                h += `<label class="option-card flex items-center p-4 rounded-xl bg-white border-2 shadow-sm">
+                h += `<label class="option-card flex items-center p-4 rounded-xl bg-white border-2 shadow-sm mb-2">
                     <input type="radio" name="ans" value="${o}" ${checked} onchange="saveAnswer('${o}')" class="w-5 h-5 accent-blue-700">
                     <span class="ml-3 text-slate-700 option-content"><b>${o.toUpperCase()}.</b> ${txt}</span>
                 </label>`;
             }
         });
         document.getElementById('opsi-list').innerHTML = h;
+        document.getElementById('btn-prev').classList.toggle('hidden', index == 0);
         document.getElementById('btn-next').classList.toggle('hidden', index == soalData.length-1);
         document.getElementById('btn-finish').classList.toggle('hidden', index != soalData.length-1);
     }
 
     function saveAnswer(o) { jawabanUser[index] = o; }
     function nav(d) { index += d; renderSoal(); }
-
     function finish() { document.getElementById('modal-kumpul').classList.remove('hidden'); }
     function batalKumpul() { document.getElementById('modal-kumpul').classList.add('hidden'); }
 
@@ -157,7 +176,7 @@
         db.ref('hasil').push({ nama: siswa.nama, kelas: siswa.kelas, mapel: paket.mapel, nilai: nilai, waktu: new Date().toLocaleString() })
         .then(() => {
             document.getElementById('wrapper-ujian').classList.add('hidden');
-            document.getElementById('teks-nilai').innerText = (paket.showNilai == "ya") ? "Nilai: " + nilai : "Ujian Selesai";
+            document.getElementById('teks-nilai').innerText = (paket.showNilai == "ya") ? "Nilai: " + nilai : "Jawaban Terkirim!";
             document.getElementById('box-selesai').classList.remove('hidden');
             document.getElementById('box-selesai').classList.add('flex');
         });
@@ -165,10 +184,11 @@
 
     function startTimer(min) {
         let sec = min * 60;
-        setInterval(() => {
+        const x = setInterval(() => {
+            if(!isExamActive) clearInterval(x);
             let m = Math.floor(sec/60), s = sec%60;
             document.getElementById('timer').innerText = `${m}:${s<10?'0'+s:s}`;
-            if(sec-- <= 0) processScore();
+            if(sec-- <= 0) { clearInterval(x); processScore(); }
         }, 1000);
     }
     function keluarSistem() { sessionStorage.clear(); window.location.href="index.html"; }
