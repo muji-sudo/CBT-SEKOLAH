@@ -8,32 +8,53 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; -webkit-user-select: none; user-select: none; }
+        .option-card { border: 2px solid #f1f5f9; cursor: pointer; transition: 0.2s; }
+        input:checked + .option-content { color: #1e40af; font-weight: 700; }
+    </style>
 </head>
 <body class="bg-slate-50 min-h-screen">
 
-    <div id="box-curang" class="hidden fixed inset-0 bg-red-700 z-[9999] flex flex-col items-center justify-center text-white p-6 text-center">
-        <h1 class="text-6xl font-black mb-4">DIBLOKIR!</h1>
-        <p id="teks-curang" class="text-xl mb-8"></p>
-        <p class="bg-white/20 p-4 rounded-lg mb-8">Akun Anda telah dinonaktifkan secara otomatis. Silakan hubungi pengawas.</p>
-        <button onclick="keluarSistem()" class="bg-white text-red-700 font-bold py-3 px-10 rounded-xl">Keluar</button>
+    <div id="box-curang" class="hidden fixed inset-0 bg-red-600 z-[9999] flex flex-col items-center justify-center text-white p-6 text-center">
+        <h1 class="text-5xl font-black mb-4">STOP!</h1>
+        <p id="teks-curang" class="text-2xl font-bold mb-8"></p>
+        <button onclick="keluarSistem()" class="bg-white text-red-600 font-bold py-3 px-8 rounded-xl">Kembali Login</button>
+    </div>
+
+    <div id="modal-kumpul" class="hidden fixed inset-0 bg-black/50 z-[9000] flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl">
+            <h3 class="text-2xl font-black mb-4">Selesai Ujian?</h3>
+            <p class="text-slate-500 mb-8">Kirim jawaban sekarang? Data tidak bisa diubah lagi.</p>
+            <div class="flex gap-3">
+                <button onclick="batalKumpul()" class="w-full bg-slate-200 py-3 rounded-xl font-bold">Batal</button>
+                <button onclick="processScore()" class="w-full bg-green-500 text-white py-3 rounded-xl font-black">Ya, Kirim!</button>
+            </div>
+        </div>
     </div>
 
     <div id="wrapper-ujian">
         <header class="bg-blue-900 text-white p-4 shadow-lg flex justify-between items-center sticky top-0 z-40">
-            <div><h2 id="n-siswa" class="font-bold text-sm">...</h2><span id="h-mapel" class="text-[10px] text-yellow-300"></span></div>
+            <div class="flex items-center gap-2">
+                <div class="bg-yellow-400 text-blue-900 font-bold px-2 py-1 rounded text-xs">CBT</div>
+                <div>
+                    <h2 id="n-siswa" class="font-bold text-sm">...</h2>
+                    <span id="h-mapel" class="text-[10px] text-yellow-300"></span>
+                </div>
+            </div>
             <div id="timer" class="bg-red-600 px-3 py-1 rounded-lg font-mono font-bold">00:00</div>
         </header>
 
         <main class="container mx-auto p-4 max-w-4xl">
             <div id="box-start" class="bg-white p-8 rounded-3xl shadow-xl text-center mt-4">
                 <h3 id="t-mapel" class="text-2xl font-black text-blue-900 mb-6">-</h3>
-                <button id="btn-start-action" onclick="startNow()" class="bg-blue-700 text-white w-full py-4 rounded-2xl font-black">MULAI UJIAN</button>
+                <button onclick="startNow()" class="bg-blue-700 text-white w-full py-4 rounded-2xl font-black">MULAI UJIAN</button>
             </div>
 
             <div id="box-soal" class="hidden mt-4">
-                <div class="bg-white rounded-2xl shadow-lg p-6 border">
-                    <div id="display-gambar"></div>
-                    <div id="soal-teks" class="text-lg mb-6"></div>
+                <div class="bg-white rounded-2xl shadow-lg p-6 border border-slate-200">
+                    <div class="mb-4 font-bold text-slate-400">SOAL <span id="no-skrg" class="text-blue-600 text-xl">1</span></div>
+                    <div id="soal-teks" class="text-lg text-slate-800 mb-6 leading-relaxed"></div>
                     <div id="opsi-list" class="space-y-3"></div>
                 </div>
                 <div class="mt-6 flex gap-3">
@@ -45,10 +66,10 @@
         </main>
     </div>
 
-    <div id="box-selesai" class="hidden min-h-screen items-center justify-center p-4 bg-slate-50 flex-col">
-        <div class="bg-white p-10 rounded-3xl shadow-2xl text-center max-w-md w-full">
-            <h2 class="text-3xl font-black mb-4">Selesai!</h2>
-            <div id="box-nilai-final" class="hidden text-5xl font-black text-blue-600 mb-8">0</div>
+    <div id="box-selesai" class="hidden min-h-screen items-center justify-center p-4 bg-slate-50">
+        <div class="bg-white p-10 rounded-3xl shadow-2xl text-center max-w-md w-full border-t-8 border-green-500">
+            <h2 class="text-3xl font-black text-slate-800 mb-2">Terima Kasih</h2>
+            <p id="teks-nilai" class="text-xl font-bold text-blue-600 mb-8 bg-blue-50 py-4 rounded-2xl"></p>
             <button onclick="keluarSistem()" class="bg-slate-800 text-white font-black py-4 px-10 rounded-2xl w-full">Kembali</button>
         </div>
     </div>
@@ -58,60 +79,39 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    const sData = JSON.parse(sessionStorage.getItem('siswa_aktif'));
-    if(!sData) window.location.href="index.html";
+    const siswa = JSON.parse(sessionStorage.getItem('siswa_aktif'));
+    if(!siswa) window.location.href="index.html";
+    document.getElementById('n-siswa').innerText = siswa.nama;
 
     let soalData = [], index = 0, paket = null, jawabanUser = {}, isExamActive = false;
 
-    // CEK STATUS REALTIME (JIKA DIBLOKIR ADMIN SAAT UJIAN)
-    db.ref('siswa').orderByChild('username').equalTo(sData.username).on('value', snap => {
-        snap.forEach(c => {
-            if(c.val().status === 'diblokir') {
-                isExamActive = false;
-                document.getElementById('wrapper-ujian').classList.add('hidden');
-                document.getElementById('box-curang').classList.remove('hidden');
-            }
-        });
+    db.ref('pengaturan').on('value', snap => {
+        const d = snap.val();
+        if(d) document.getElementById('teks-curang').innerText = d.pesan_curang || "Anda terindikasi curang!";
     });
 
-    // FUNGSI BLOKIR OTOMATIS
-    function aksiBlokir() {
+    // SISTEM ANTI CURANG
+    function periksaKecurangan() {
         if (isExamActive) {
             isExamActive = false;
-            db.ref('siswa').orderByChild('username').equalTo(sData.username).once('value', snap => {
-                snap.forEach(c => { db.ref('siswa/'+c.key).update({ status: 'diblokir' }); });
-            });
+            document.getElementById('wrapper-ujian').classList.add('hidden');
+            document.getElementById('box-curang').classList.remove('hidden');
         }
     }
-    window.addEventListener("blur", aksiBlokir);
-    document.addEventListener("visibilitychange", () => { if(document.hidden) aksiBlokir(); });
+    window.addEventListener("blur", periksaKecurangan);
+    document.addEventListener("visibilitychange", () => { if(document.hidden) periksaKecurangan(); });
 
-    // CARI PAKET & CEK APAKAH SUDAH PERNAH KERJA
     db.ref('bank_soal').on('value', snap => {
-        const tgl = new Date().toLocaleDateString('en-CA');
+        const tglSkrg = new Date().toLocaleDateString('en-CA');
         snap.forEach(c => {
             const d = c.val();
-            if(d.kelas == sData.kelas && d.tanggal == tgl && d.status == 'aktif') {
+            if(d.kelas == siswa.kelas && d.tanggal == tglSkrg && d.status == "aktif") {
                 paket = d;
                 document.getElementById('t-mapel').innerText = d.mapel;
                 document.getElementById('h-mapel').innerText = d.mapel;
-                cekSudahUjian(d.mapel);
             }
         });
     });
-
-    function cekSudahUjian(mapel) {
-        db.ref('hasil').once('value', snap => {
-            snap.forEach(c => {
-                const v = c.val();
-                if(v.nama == sData.nama && v.mapel == mapel) {
-                    document.getElementById('btn-start-action').disabled = true;
-                    document.getElementById('btn-start-action').innerText = "ANDA SUDAH SELESAI UJIAN";
-                    document.getElementById('btn-start-action').classList.replace('bg-blue-700', 'bg-slate-400');
-                }
-            });
-        });
-    }
 
     function startNow() {
         isExamActive = true;
@@ -124,16 +124,17 @@
 
     function renderSoal() {
         const s = soalData[index];
-        document.getElementById('soal-teks').innerText = s.pertanyaan || s.PERTANYAAN;
-        const img = s.gambar || s.GAMBAR;
-        document.getElementById('display-gambar').innerHTML = img ? `<img src="${img}" class="w-full max-h-64 object-contain mb-4">` : "";
-        
+        document.getElementById('no-skrg').innerText = index + 1;
+        document.getElementById('soal-teks').innerText = s.pertanyaan;
         let h = "";
         ['a','b','c','d','e'].forEach(o => {
-            const txt = s['opsi_'+o] || s['OPSI_'+o.toUpperCase()];
+            const txt = s['opsi_'+o];
             if(txt) {
-                const chk = (jawabanUser[index] == o) ? 'checked' : '';
-                h += `<label class="flex items-center p-4 border rounded-xl"><input type="radio" name="ans" value="${o}" ${chk} onchange="jawabanUser[${index}]='${o}'" class="w-5 h-5"><span class="ml-3"><b>${o.toUpperCase()}.</b> ${txt}</span></label>`;
+                const checked = (jawabanUser[index] == o) ? 'checked' : '';
+                h += `<label class="option-card flex items-center p-4 rounded-xl bg-white border-2 shadow-sm">
+                    <input type="radio" name="ans" value="${o}" ${checked} onchange="saveAnswer('${o}')" class="w-5 h-5 accent-blue-700">
+                    <span class="ml-3 text-slate-700 option-content"><b>${o.toUpperCase()}.</b> ${txt}</span>
+                </label>`;
             }
         });
         document.getElementById('opsi-list').innerHTML = h;
@@ -141,28 +142,33 @@
         document.getElementById('btn-finish').classList.toggle('hidden', index != soalData.length-1);
     }
 
+    function saveAnswer(o) { jawabanUser[index] = o; }
     function nav(d) { index += d; renderSoal(); }
-    function finish() { Swal.fire({title:'Kumpulkan?', showCancelButton:true}).then(r => { if(r.isConfirmed) processScore(); }); }
+
+    function finish() { document.getElementById('modal-kumpul').classList.remove('hidden'); }
+    function batalKumpul() { document.getElementById('modal-kumpul').classList.add('hidden'); }
 
     function processScore() {
         isExamActive = false;
+        document.getElementById('modal-kumpul').classList.add('hidden');
         let benar = 0;
-        soalData.forEach((s, i) => { if(jawabanUser[i] == (s.kunci||s.KUNCI).toLowerCase()) benar++; });
+        soalData.forEach((s, i) => { if(jawabanUser[i] == s.kunci.toLowerCase()) benar++; });
         const nilai = Math.round((benar/soalData.length)*100);
-        db.ref('hasil').push({ nama: sData.nama, kelas: sData.kelas, mapel: paket.mapel, nilai: nilai, waktu: new Date().toLocaleString() })
+        db.ref('hasil').push({ nama: siswa.nama, kelas: siswa.kelas, mapel: paket.mapel, nilai: nilai, waktu: new Date().toLocaleString() })
         .then(() => {
             document.getElementById('wrapper-ujian').classList.add('hidden');
-            if(paket.showNilai == 'ya') { document.getElementById('box-nilai-final').innerText = nilai; document.getElementById('box-nilai-final').classList.remove('hidden'); }
+            document.getElementById('teks-nilai').innerText = (paket.showNilai == "ya") ? "Nilai: " + nilai : "Ujian Selesai";
+            document.getElementById('box-selesai').classList.remove('hidden');
             document.getElementById('box-selesai').classList.add('flex');
         });
     }
 
-    function startTimer(m) {
-        let s = m * 60;
+    function startTimer(min) {
+        let sec = min * 60;
         setInterval(() => {
-            let min = Math.floor(s/60), sec = s%60;
-            document.getElementById('timer').innerText = `${min}:${sec<10?'0'+sec:sec}`;
-            if(s-- <= 0) processScore();
+            let m = Math.floor(sec/60), s = sec%60;
+            document.getElementById('timer').innerText = `${m}:${s<10?'0'+s:s}`;
+            if(sec-- <= 0) processScore();
         }, 1000);
     }
     function keluarSistem() { sessionStorage.clear(); window.location.href="index.html"; }
