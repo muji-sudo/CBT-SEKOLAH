@@ -13,18 +13,17 @@
 <body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
     <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md border border-slate-200">
         <div class="text-center mb-8">
-            <img id="logo-img" src="" class="h-20 mx-auto mb-4 hidden">
             <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight" id="sekolah-nama">CBT LOGIN</h1>
             <p class="text-slate-500 mt-2 font-medium" id="judul-ujian">Silakan masuk untuk memulai ujian</p>
         </div>
         <div class="space-y-5">
             <div>
                 <label class="block text-sm font-bold text-slate-700 mb-2 px-1">Username</label>
-                <input type="text" id="username" class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none" placeholder="Masukkan username">
+                <input type="text" id="username" class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none" placeholder="Username">
             </div>
             <div>
                 <label class="block text-sm font-bold text-slate-700 mb-2 px-1">Password</label>
-                <input type="password" id="password" class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none" placeholder="Masukkan password">
+                <input type="password" id="password" class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none" placeholder="Password">
             </div>
             <button onclick="login()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-4 rounded-2xl shadow-lg shadow-blue-200 transform transition active:scale-95">MASUK SEKARANG</button>
         </div>
@@ -35,13 +34,11 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // Load Settings
         db.ref('pengaturan').on('value', snap => {
             const d = snap.val();
             if(d) {
-                document.getElementById('sekolah-nama').innerText = d.nama_sekolah;
-                document.getElementById('judul-ujian').innerText = d.judul_app;
-                if(d.logo_url) { document.getElementById('logo-img').src = d.logo_url; document.getElementById('logo-img').classList.remove('hidden'); }
+                document.getElementById('sekolah-nama').innerText = d.nama_sekolah || "CBT PRO";
+                document.getElementById('judul-ujian').innerText = d.judul_app || "Ujian Online";
             }
         });
 
@@ -49,8 +46,6 @@
             const userIn = document.getElementById('username').value.trim();
             const passIn = document.getElementById('password').value.trim();
             if(!userIn || !passIn) return Swal.fire('Opps!','Isi Username & Password','warning');
-
-            Swal.fire({ title: 'Memverifikasi...', didOpen: () => { Swal.showLoading() } });
 
             db.ref('siswa').once('value', snap => {
                 let userValid = null;
@@ -68,7 +63,7 @@
                 });
 
                 if(isBlokir) {
-                    Swal.fire('Akses Ditolak', 'Akun Anda diblokir karena terdeteksi curang!', 'error');
+                    Swal.fire('Akses Ditolak', 'Akun Anda DIBLOKIR karena terdeteksi curang!', 'error');
                 } else if(userValid) {
                     sessionStorage.setItem('siswa_aktif', JSON.stringify(userValid));
                     window.location.href = "ujian.html";
