@@ -3,133 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="web-title">CBT PRO - Loading...</title>
+    <title id="web-title">CBT PRO - Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
-    </style>
+    <style>body { font-family: 'Inter', sans-serif; }</style>
 </head>
-<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
-
-    <div class="glass-card p-8 rounded-3xl shadow-2xl w-full max-w-md border-t-8 border-blue-900 text-center transition-all duration-500">
-        
-        <div class="mb-6">
-            <img id="display-logo" src="https://via.placeholder.com/100?text=LOGO" alt="Logo" class="h-24 mx-auto object-contain drop-shadow-md">
+<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md border border-slate-200">
+        <div class="text-center mb-8">
+            <img id="logo-img" src="" class="h-20 mx-auto mb-4 hidden">
+            <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight" id="sekolah-nama">CBT LOGIN</h1>
+            <p class="text-slate-500 mt-2 font-medium" id="judul-ujian">Silakan masuk untuk memulai ujian</p>
         </div>
-        
-        <div class="mb-8">
-            <h2 id="display-nama-sekolah" class="text-blue-900 font-black text-2xl uppercase tracking-tight leading-tight">NAMA SEKOLAH</h2>
-            <div class="h-1 w-20 bg-yellow-400 mx-auto my-2 rounded-full"></div>
-            <p id="display-judul-app" class="text-slate-500 text-sm font-semibold uppercase tracking-widest">Aplikasi Ujian Online</p>
-        </div>
-
-        <div class="space-y-4 text-left">
+        <div class="space-y-5">
             <div>
-                <label class="block text-xs font-bold text-slate-500 mb-1 uppercase ml-1">Username / NIS</label>
-                <div class="relative">
-                    <input type="text" id="username" class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-100 outline-none transition-all pl-11" placeholder="Username">
-                    <span class="absolute left-4 top-3.5 text-slate-400">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                    </span>
-                </div>
+                <label class="block text-sm font-bold text-slate-700 mb-2 px-1">Username</label>
+                <input type="text" id="username" class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none" placeholder="Masukkan username">
             </div>
-            
             <div>
-                <label class="block text-xs font-bold text-slate-500 mb-1 uppercase ml-1">Password</label>
-                <div class="relative">
-                    <input type="password" id="password" class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-100 outline-none transition-all pl-11 pr-11" placeholder="••••••••">
-                    <span class="absolute left-4 top-3.5 text-slate-400">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                    </span>
-                    <button type="button" onclick="togglePass()" class="absolute right-4 top-3.5 text-slate-400 hover:text-blue-600 transition-colors">
-                        <svg id="eye-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path id="path-open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path id="path-body" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                    </button>
-                </div>
+                <label class="block text-sm font-bold text-slate-700 mb-2 px-1">Password</label>
+                <input type="password" id="password" class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none" placeholder="Masukkan password">
             </div>
-
-            <button onclick="login()" class="w-full bg-blue-900 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-blue-800 active:transform active:scale-95 transition-all mt-4 tracking-wide">
-                MASUK KE SISTEM
-            </button>
-        </div>
-        
-        <div class="mt-10 pt-6 border-t border-slate-100">
-            <p class="text-[10px] text-slate-400 font-bold tracking-widest uppercase">Powered by SENSEI</p>
+            <button onclick="login()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-4 rounded-2xl shadow-lg shadow-blue-200 transform transition active:scale-95">MASUK SEKARANG</button>
         </div>
     </div>
 
-<script>
-    const firebaseConfig = { 
-        apiKey: "AIzaSyBGl1WySSrPU_86T0SOKi0FhpMdAw8NXLs", 
-        databaseURL: "https://cbt-v1-c3387-default-rtdb.asia-southeast1.firebasedatabase.app" 
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    <script>
+        const firebaseConfig = { apiKey: "AIzaSyBGl1WySSrPU_86T0SOKi0FhpMdAw8NXLs", databaseURL: "https://cbt-v1-c3387-default-rtdb.asia-southeast1.firebasedatabase.app" };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-    // SINKRONISASI PENGATURAN
-    db.ref('pengaturan').on('value', snap => {
-        const d = snap.val();
-        if(d) {
-            if(d.nama_sekolah) document.getElementById('display-nama-sekolah').innerText = d.nama_sekolah;
-            if(d.judul_app) {
-                document.getElementById('display-judul-app').innerText = d.judul_app;
-                document.getElementById('web-title').innerText = d.judul_app + " - Login";
-            }
-            if(d.logo_url) document.getElementById('display-logo').src = d.logo_url;
-        }
-    });
-
-    // FUNGSI LIHAT PASSWORD
-    function togglePass() {
-        const pInput = document.getElementById('password');
-        const pBody = document.getElementById('path-body');
-        
-        if (pInput.type === "password") {
-            pInput.type = "text";
-            // Ubah icon jadi mata coret (sederhana)
-            pBody.setAttribute('d', 'M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878l-4.242-4.242m4.242 4.242L14.12 5.88M3 3l18 18');
-        } else {
-            pInput.type = "password";
-            // Kembalikan jadi mata normal
-            pBody.setAttribute('d', 'M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z');
-        }
-    }
-
-    // FUNGSI LOGIN
-    function login() {
-        const userIn = document.getElementById('username').value.trim();
-        const passIn = document.getElementById('password').value.trim();
-
-        if(!userIn || !passIn) return Swal.fire('Opps!','Isi Username & Password','warning');
-
-        Swal.fire({ title: 'Memverifikasi...', didOpen: () => { Swal.showLoading() } });
-
-        db.ref('siswa').once('value', snap => {
-            let userValid = null;
-            snap.forEach(child => {
-                const data = child.val();
-                if(String(data.username) === userIn && String(data.sandi) === passIn) { userValid = data; }
-            });
-
-            if(userValid) {
-                sessionStorage.setItem('siswa_aktif', JSON.stringify(userValid));
-                Swal.fire({ icon: 'success', title: 'Berhasil', showConfirmButton: false, timer: 1000 })
-                    .then(() => window.location.href = "ujian.html");
-            } else {
-                Swal.fire('Gagal','User atau Password salah!','error');
+        // Load Settings
+        db.ref('pengaturan').on('value', snap => {
+            const d = snap.val();
+            if(d) {
+                document.getElementById('sekolah-nama').innerText = d.nama_sekolah;
+                document.getElementById('judul-ujian').innerText = d.judul_app;
+                if(d.logo_url) { document.getElementById('logo-img').src = d.logo_url; document.getElementById('logo-img').classList.remove('hidden'); }
             }
         });
-    }
 
-    document.addEventListener('keypress', (e) => { if(e.key === 'Enter') login(); });
-</script>
+        function login() {
+            const userIn = document.getElementById('username').value.trim();
+            const passIn = document.getElementById('password').value.trim();
+            if(!userIn || !passIn) return Swal.fire('Opps!','Isi Username & Password','warning');
+
+            Swal.fire({ title: 'Memverifikasi...', didOpen: () => { Swal.showLoading() } });
+
+            db.ref('siswa').once('value', snap => {
+                let userValid = null;
+                let isBlokir = false;
+
+                snap.forEach(child => {
+                    const data = child.val();
+                    if(String(data.username) === userIn && String(data.sandi) === passIn) {
+                        if(data.status === 'blokir') {
+                            isBlokir = true;
+                        } else {
+                            userValid = {...data, key: child.key};
+                        }
+                    }
+                });
+
+                if(isBlokir) {
+                    Swal.fire('Akses Ditolak', 'Akun Anda diblokir karena terdeteksi curang!', 'error');
+                } else if(userValid) {
+                    sessionStorage.setItem('siswa_aktif', JSON.stringify(userValid));
+                    window.location.href = "ujian.html";
+                } else {
+                    Swal.fire('Gagal', 'Username atau Password salah!', 'error');
+                }
+            });
+        }
+    </script>
 </body>
 </html>
