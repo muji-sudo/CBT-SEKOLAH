@@ -3,25 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CBT UJIAN</title>
+    <title>UJIAN CBT - MULTI TYPE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
-<body class="bg-slate-50 min-h-screen select-none">
-
-    <div id="box-curang" class="hidden fixed inset-0 bg-red-700 z-[9999] flex flex-col items-center justify-center text-center p-6 text-white">
-        <h1 class="text-5xl font-black mb-4">CURANG TERDETEKSI!</h1>
-        <p id="pesan-curang-display" class="text-xl italic mb-6"></p>
-        <button onclick="window.location.href='index.html'" class="bg-white text-red-700 px-8 py-3 rounded-full font-bold">LOGOUT</button>
+<body class="bg-slate-100 min-h-screen select-none">
+    <div id="box-curang" class="hidden fixed inset-0 bg-red-600 z-[9999] flex flex-col items-center justify-center text-white text-center p-6">
+        <h1 class="text-4xl font-bold mb-4">CURANG TERDETEKSI!</h1>
+        <p id="pesan-curang-text"></p>
+        <button onclick="location.href='index.html'" class="mt-6 bg-white text-red-600 px-6 py-2 rounded-xl font-bold">KELUAR</button>
     </div>
 
-    <div id="wrapper-ujian" class="p-4 max-w-3xl mx-auto mt-10">
-        <div class="bg-white p-6 rounded-2xl shadow-lg">
-            <h2 id="mapel" class="text-2xl font-bold border-b pb-4 mb-6">Memuat Ujian...</h2>
+    <div id="wrapper-ujian" class="max-w-3xl mx-auto py-10 px-4">
+        <div class="bg-white p-6 rounded-2xl shadow-xl">
+            <h2 id="mapel-title" class="text-2xl font-bold mb-6 text-blue-800 border-b pb-4">Memuat Soal...</h2>
             <div id="konten-soal" class="space-y-8"></div>
-            <button onclick="selesai()" class="w-full bg-green-600 text-white font-bold py-4 rounded-2xl mt-10">SELESAI & KIRIM</button>
+            <button onclick="kirimUjian()" class="w-full bg-green-600 text-white font-bold py-4 rounded-2xl mt-10 hover:bg-green-700">KIRIM JAWABAN</button>
         </div>
     </div>
 
@@ -31,31 +30,26 @@
         const db = firebase.database();
 
         const siswa = JSON.parse(sessionStorage.getItem('siswa_aktif'));
-        if(!siswa) window.location.href = "index.html";
+        if(!siswa) location.href = "index.html";
 
-        let isAktif = true, soalData = [], jawaban = {}, namaMapel = "";
+        let soalData = [], jawaban = {}, isUjian = true;
 
-        // PENGATURAN & ANTI CURANG
-        db.ref('pengaturan').on('value', snap => {
-            if(snap.val()) document.getElementById('pesan-curang-display').innerText = snap.val().pesan_curang;
-        });
+        db.ref('pengaturan').on('value', snap => { document.getElementById('pesan-curang-text').innerText = snap.val().pesan_curang; });
 
         window.addEventListener('blur', () => {
-            if(isAktif) {
-                isAktif = false;
+            if(isUjian) {
+                isUjian = false;
                 db.ref('siswa/' + siswa.key).update({ status: 'blokir' });
                 document.getElementById('wrapper-ujian').style.display = 'none';
                 document.getElementById('box-curang').classList.remove('hidden');
             }
         });
 
-        // LOAD SOAL
         db.ref('bank_soal').once('value', snap => {
             snap.forEach(c => {
                 const v = c.val();
                 if(v.status === 'aktif' && v.kelas === siswa.kelas) {
-                    namaMapel = v.mapel;
-                    document.getElementById('mapel').innerText = v.mapel;
+                    document.getElementById('mapel-title').innerText = v.mapel;
                     soalData = v.soal;
                     render();
                 }
@@ -65,33 +59,72 @@
         function render() {
             let h = "";
             soalData.forEach((s, i) => {
-                h += `<div class="p-4 border-l-4 border-blue-500 bg-slate-50 rounded-r-xl">
-                    <div class="font-bold text-lg mb-4 text-slate-700">${i+1}. ${s.pertanyaan}</div>
-                    <div class="space-y-3">
-                        ${['a','b','c','d'].map(opt => `
-                            <label class="flex items-center p-3 bg-white border rounded-xl cursor-pointer hover:bg-blue-50 transition">
-                                <input type="radio" name="q${i}" onclick="jawaban[${i}]='${opt.toUpperCase()}'" class="w-5 h-5 mr-3">
+                const tipe = (s.tipe || "pg").toLowerCase();
+                let opsiHtml = "";
+
+                if(tipe === "pg" || tipe === "bs") {
+                    ['a','b','c','d'].forEach(opt => {
+                        if(s['opsi_'+opt] && s['opsi_'+opt] !== "-") {
+                            opsiHtml += `
+                            <label class="flex items-center p-3 border rounded-xl cursor-pointer hover:bg-blue-50">
+                                <input type="radio" name="q${i}" onclick="setJawab(${i},'${opt.toUpperCase()}')" class="w-5 h-5 mr-3">
                                 <span>${s['opsi_'+opt]}</span>
-                            </label>
-                        `).join('')}
-                    </div>
-                </div>`;
+                            </label>`;
+                        }
+                    });
+                } else if(tipe === "pgk") {
+                    ['a','b','c','d'].forEach(opt => {
+                        if(s['opsi_'+opt] && s['opsi_'+opt] !== "-") {
+                            opsiHtml += `
+                            <label class="flex items-center p-3 border rounded-xl cursor-pointer hover:bg-blue-50">
+                                <input type="checkbox" onchange="setJawabKompleks(${i},'${opt.toUpperCase()}')" class="w-5 h-5 mr-3">
+                                <span>${s['opsi_'+opt]}</span>
+                            </label>`;
+                        }
+                    });
+                }
+
+                h += `<div class="p-5 bg-slate-50 rounded-2xl border-l-8 border-blue-500 shadow-sm">
+                        <div class="font-bold text-lg mb-4">${i+1}. ${s.pertanyaan}</div>
+                        <div class="space-y-2">${opsiHtml}</div>
+                      </div>`;
             });
             document.getElementById('konten-soal').innerHTML = h;
         }
 
-        function selesai() {
-            isAktif = false;
-            let benar = 0;
-            soalData.forEach((s, i) => { if(jawaban[i] === s.kunci) benar++; });
-            const nilai = Math.round((benar / soalData.length) * 100);
+        function setJawab(idx, val) { jawaban[idx] = val; }
+        
+        function setJawabKompleks(idx, val) {
+            if(!jawaban[idx]) jawaban[idx] = [];
+            if(typeof jawaban[idx] === 'string') jawaban[idx] = [];
+            const pos = jawaban[idx].indexOf(val);
+            if(pos === -1) jawaban[idx].push(val);
+            else jawaban[idx].splice(pos, 1);
+        }
 
-            db.ref('hasil').push({
-                nama: siswa.nama, kelas: siswa.kelas, mapel: namaMapel,
-                nilai: nilai, waktu: new Date().toLocaleString()
-            }).then(() => {
-                Swal.fire('Sukses','Ujian Berhasil Dikirim','success').then(() => window.location.href='index.html');
+        function kirimUjian() {
+            isUjian = false;
+            let benar = 0;
+            soalData.forEach((s, i) => {
+                const tipe = (s.tipe || "pg").toLowerCase();
+                const kunci = s.kunci.toUpperCase().split(',').sort().join(',');
+                let userAns = "";
+                
+                if(tipe === "pgk") {
+                    userAns = (jawaban[i] || []).sort().join(',');
+                } else if(tipe === "bs") {
+                    userAns = (jawaban[i] === 'A' ? "Benar" : "Salah");
+                    if(userAns === s.kunci) benar++; return; // Khusus BS langsung cek
+                } else {
+                    userAns = jawaban[i] || "";
+                }
+
+                if(userAns === kunci) benar++;
             });
+
+            const nilai = Math.round((benar / soalData.length) * 100);
+            db.ref('hasil').push({ nama: siswa.nama, kelas: siswa.kelas, mapel: document.getElementById('mapel-title').innerText, nilai: nilai, waktu: new Date().toLocaleString() })
+            .then(() => Swal.fire('Terkirim!','Nilai Anda: ' + nilai, 'success').then(() => location.href='index.html'));
         }
     </script>
 </body>
