@@ -11,38 +11,105 @@
 </head>
 <body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
     <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md text-center border-t-8 border-blue-900">
-        <img id="display-logo" src="" class="w-24 mx-auto mb-4">
+        <img id="display-logo" src="" class="w-24 mx-auto mb-4" alt="Logo">
+        
         <h2 id="display-nama" class="text-2xl font-black text-blue-900">MEMUAT...</h2>
         <p id="display-judul" class="text-slate-500 text-sm mb-8 uppercase tracking-widest font-bold"></p>
         
         <div class="space-y-4 text-left">
-            <input type="text" id="user" class="w-full px-4 py-3 rounded-xl border-2 outline-none focus:border-blue-600" placeholder="Username">
-            <input type="password" id="pass" class="w-full px-4 py-3 rounded-xl border-2 outline-none focus:border-blue-600" placeholder="Password">
-            <button onclick="login()" class="w-full bg-blue-900 text-white font-black py-4 rounded-2xl shadow-lg">MASUK</button>
+            <div>
+                <label class="block text-xs font-bold text-slate-400 mb-1 ml-1">USERNAME</label>
+                <input type="text" id="user" class="w-full px-4 py-3 rounded-xl border-2 outline-none focus:border-blue-600 bg-slate-50" placeholder="Masukkan username">
+            </div>
+
+            <div class="relative">
+                <label class="block text-xs font-bold text-slate-400 mb-1 ml-1">PASSWORD</label>
+                <input type="password" id="pass" class="w-full px-4 py-3 rounded-xl border-2 outline-none focus:border-blue-600 bg-slate-50" placeholder="Masukkan password">
+                
+                <button type="button" onclick="togglePass()" class="absolute right-4 top-[34px] text-slate-400 hover:text-blue-600 focus:outline-none">
+                    <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                </button>
+            </div>
+
+            <button onclick="login()" class="w-full bg-blue-900 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-blue-800 transition-all active:scale-95 mt-2">
+                MASUK KE UJIAN
+            </button>
         </div>
     </div>
 
 <script>
-    const firebaseConfig = { apiKey: "AIzaSyBGl1WySSrPU_86T0SOKi0FhpMdAw8NXLs", databaseURL: "https://cbt-v1-c3387-default-rtdb.asia-southeast1.firebasedatabase.app" };
-    firebase.initializeApp(firebaseConfig);
+    // KONFIGURASI FIREBASE (Sesuai File Anda)
+    const firebaseConfig = { 
+        apiKey: "AIzaSyBGl1WySSrPU_86T0SOKi0FhpMdAw8NXLs", 
+        databaseURL: "https://cbt-v1-c3387-default-rtdb.asia-southeast1.firebasedatabase.app" 
+    };
+    
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
     const db = firebase.database();
 
+    // LOAD PENGATURAN (Logo & Nama Sekolah)
     db.ref('pengaturan').on('value', snap => {
         const d = snap.val();
         if(d) {
-            document.getElementById('display-nama').innerText = d.nama_sekolah;
-            document.getElementById('display-judul').innerText = d.judul_app;
-            document.getElementById('display-logo').src = d.logo_url;
+            document.getElementById('display-nama').innerText = d.nama_sekolah || "CBT SYSTEM";
+            document.getElementById('display-judul').innerText = d.judul_app || "";
+            document.getElementById('display-logo').src = d.logo_url || "";
         }
     });
 
+    // FUNGSI LIHAT PASSWORD (TOGGLE)
+    function togglePass() {
+        const pInput = document.getElementById('pass');
+        const eIcon = document.getElementById('eye-icon');
+        
+        if (pInput.type === "password") {
+            pInput.type = "text";
+            // Icon mata dicoret
+            eIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />`;
+        } else {
+            pInput.type = "password";
+            // Icon mata normal
+            eIcon.innerHTML = `
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            `;
+        }
+    }
+
+    // FUNGSI LOGIN DENGAN CEK BLOKIR
     function login() {
-        const u = document.getElementById('user').value, p = document.getElementById('pass').value;
+        const u = document.getElementById('user').value.trim();
+        const p = document.getElementById('pass').value.trim();
+
+        if(!u || !p) {
+            return Swal.fire('Opps!','Username dan Password wajib diisi','warning');
+        }
+
         db.ref('siswa').once('value', snap => {
             let found = null;
-            snap.forEach(c => { const d = c.val(); if(d.username == u && d.sandi == p) found = d; });
-            if(found) { sessionStorage.setItem('siswa_aktif', JSON.stringify(found)); window.location.href="ujian.html"; }
-            else { Swal.fire('Error','User/Pass Salah','error'); }
+            snap.forEach(c => { 
+                const d = c.val(); 
+                if(String(d.username) === u && String(d.sandi) === p) {
+                    found = d;
+                }
+            });
+
+            if(found) { 
+                // Cek apakah siswa diblokir karena curang sebelumnya
+                if(found.status === 'diblokir') {
+                    Swal.fire('AKUN DIBLOKIR','Anda terdeteksi curang sebelumnya. Hubungi Admin.','error');
+                } else {
+                    sessionStorage.setItem('siswa_aktif', JSON.stringify(found)); 
+                    window.location.href = "ujian.html"; 
+                }
+            } else { 
+                Swal.fire('Login Gagal','Username atau Password salah!','error'); 
+            }
         });
     }
 </script>
