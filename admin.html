@@ -12,27 +12,26 @@
     <style>
         :root { --primary: #1e3a8a; }
         body { background: #f8fafc; font-family: 'Inter', sans-serif; }
-        .sidebar { background: var(--primary); color: white; min-height: 100vh; width: 260px; position: fixed; z-index: 1000; transition: 0.3s; }
-        .content { margin-left: 260px; padding: 30px; transition: 0.3s; }
+        .sidebar { background: var(--primary); color: white; min-height: 100vh; width: 260px; position: fixed; z-index: 1000; }
+        .content { margin-left: 260px; padding: 30px; }
         .nav-link { color: #cbd5e1; cursor: pointer; padding: 12px 20px; border-radius: 8px; margin: 5px 15px; display: block; text-decoration: none; }
         .nav-link:hover, .nav-link.active { background: rgba(255,255,255,0.1); color: white; }
         .card { border: none; border-radius: 15px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); margin-bottom: 20px; }
         .hidden { display: none; }
-        @media (max-width: 768px) { .sidebar { width: 0; overflow: hidden; } .content { margin-left: 0; } .sidebar.active { width: 260px; } }
     </style>
 </head>
 <body>
 
-<div class="sidebar" id="sidebar">
+<div class="sidebar">
     <div class="p-4 text-center">
         <div class="bg-warning text-blue-900 d-inline-block px-3 py-1 rounded fw-bold mb-2">CBT PRO</div>
         <h6 class="fw-bold text-white">Administrator</h6>
     </div>
     <nav class="mt-3">
         <a onclick="show('dash')" id="n-dash" class="nav-link active">📊 Monitoring</a>
-        <a onclick="show('bank')" id="n-bank" class="nav-link">📚 Bank Soal</a>
+        <a onclick="show('bank')" id="n-bank" class="nav-link">📝 Bank Soal</a>
         <a onclick="show('siswa')" id="n-siswa" class="nav-link">👥 Data Siswa</a>
-        <a onclick="show('set')" id="n-set" class="nav-link">⚙️ Pengaturan Web</a>
+        <a onclick="show('set')" id="n-set" class="nav-link">⚙️ Pengaturan</a>
         <hr class="mx-3 text-white-50">
         <a href="index.html" class="nav-link text-warning">🚪 Keluar</a>
     </nav>
@@ -40,100 +39,63 @@
 
 <div class="content">
     <div id="p-dash">
-        <h4 class="fw-bold mb-4">Monitoring Hasil Ujian</h4>
-        <div class="card p-4">
-            <div class="row g-3 align-items-end">
-                <div class="col-md-3">
-                    <label class="small fw-bold">Mapel</label>
-                    <select id="f-mapel" class="form-select"><option value="">Semua Mapel</option></select>
-                </div>
-                <div class="col-md-3">
-                    <label class="small fw-bold">Kelas</label>
-                    <select id="f-kelas" class="form-select"><option value="">Semua Kelas</option></select>
-                </div>
-                <div class="col-md-6 d-flex gap-2">
-                    <button onclick="renderMonitoring()" class="btn btn-primary w-100">Tampilkan Data</button>
-                    <button onclick="unduhRekap()" class="btn btn-success">Excel</button>
-                </div>
-            </div>
-        </div>
+        <h4 class="fw-bold mb-4">Monitoring Siswa</h4>
         <div class="card p-0 overflow-hidden">
             <table class="table table-hover mb-0">
-                <thead class="table-light"><tr><th>Nama</th><th>Kelas</th><th>Mapel</th><th>Skor</th><th>Waktu</th><th>Aksi</th></tr></thead>
-                <tbody id="list-hasil-body"></tbody>
+                <thead class="table-light"><tr><th>Nama</th><th>Kelas</th><th>Status</th><th>Aksi</th></tr></thead>
+                <tbody id="list-monitoring"></tbody>
             </table>
         </div>
     </div>
 
     <div id="p-bank" class="hidden">
-        <h4 class="fw-bold mb-4">Manajemen Soal</h4>
+        <h4 class="fw-bold mb-4">Bank Soal</h4>
         <div class="card p-4">
             <div class="row g-3">
                 <div class="col-md-4"><input type="text" id="bs-mapel" class="form-control" placeholder="Mata Pelajaran"></div>
                 <div class="col-md-2"><input type="text" id="bs-kelas" class="form-control" placeholder="Kelas"></div>
                 <div class="col-md-2"><input type="number" id="bs-durasi" class="form-control" placeholder="Menit"></div>
                 <div class="col-md-2"><input type="date" id="bs-tgl" class="form-control"></div>
-                <div class="col-md-2">
-                    <select id="bs-show-nilai" class="form-select">
-                        <option value="ya">Tampil Nilai</option>
-                        <option value="tidak">Sembunyi</option>
-                    </select>
-                </div>
-                <div class="col-md-12"><input type="file" id="bs-file" class="form-control" accept=".xlsx"></div>
-                <div class="col-12"><button onclick="uploadSoal()" class="btn btn-primary w-100 fw-bold">Upload Paket Soal</button></div>
+                <div class="col-md-2"><select id="bs-show-nilai" class="form-select"><option value="ya">Tampil Nilai</option><option value="tidak">Sembunyi</option></select></div>
+                <div class="col-md-12"><label class="small">Excel: pertanyaan, gambar, opsi_a, opsi_b, opsi_c, opsi_d, opsi_e, kunci</label><input type="file" id="bs-file" class="form-control" accept=".xlsx"></div>
+                <div class="col-12"><button onclick="uploadSoal()" class="btn btn-primary w-100 fw-bold">Upload Soal</button></div>
             </div>
         </div>
-        <div class="card p-0 overflow-hidden">
-            <table class="table mb-0 text-center">
-                <thead class="table-dark"><tr><th>Mapel</th><th>Kelas</th><th>Tanggal</th><th>Nilai?</th><th>Status</th><th>Aksi</th></tr></thead>
-                <tbody id="t-soal"></tbody>
-            </table>
-        </div>
+        <div class="card p-0 overflow-hidden"><table class="table mb-0"><thead class="table-dark"><tr><th>Mapel</th><th>Kelas</th><th>Hapus</th></tr></thead><tbody id="t-soal"></tbody></table></div>
     </div>
 
     <div id="p-siswa" class="hidden">
         <h4 class="fw-bold mb-4">Data Siswa</h4>
         <div class="row g-4 mb-4">
             <div class="col-md-4">
-                <div class="card p-4 h-100">
-                    <h6 class="fw-bold mb-3">Tambah Manual</h6>
-                    <input type="text" id="m-nama" class="form-control mb-2" placeholder="Nama Lengkap">
+                <div class="card p-4">
+                    <h6 class="fw-bold mb-3">Manual</h6>
+                    <input type="text" id="m-nama" class="form-control mb-2" placeholder="Nama">
                     <input type="text" id="m-kelas" class="form-control mb-2" placeholder="Kelas">
-                    <input type="text" id="m-user" class="form-control mb-2" placeholder="Username">
-                    <input type="text" id="m-pass" class="form-control mb-2" placeholder="Password">
-                    <button onclick="addManual()" class="btn btn-primary w-100 fw-bold">Simpan Siswa</button>
+                    <input type="text" id="m-user" class="form-control mb-2" placeholder="User">
+                    <input type="text" id="m-pass" class="form-control mb-2" placeholder="Pass">
+                    <button onclick="addManual()" class="btn btn-primary w-100">Simpan</button>
                 </div>
             </div>
             <div class="col-md-8">
-                <div class="card p-4 h-100 text-center">
+                <div class="card p-4 text-center">
                     <h6 class="fw-bold mb-3">Import Excel</h6>
-                    <p class="small text-muted">Format: nama, kelas, username, sandi</p>
-                    <input type="file" id="s-file" class="form-control mb-3">
-                    <button onclick="uploadSiswa()" class="btn btn-dark w-100 fw-bold">Proses Import</button>
+                    <p class="small text-muted">Kolom: nama, kelas, username, sandi</p>
+                    <input type="file" id="s-file" class="form-control mb-3" accept=".xlsx">
+                    <button onclick="uploadSiswa()" class="btn btn-dark w-100">Import Data</button>
                 </div>
             </div>
         </div>
-        <div class="card p-0 overflow-hidden">
-            <table class="table mb-0">
-                <thead class="table-light"><tr><th>Nama</th><th>Kelas</th><th>Username / Sandi</th><th>Aksi</th></tr></thead>
-                <tbody id="t-siswa"></tbody>
-            </table>
-        </div>
+        <div class="card p-0 overflow-hidden"><table class="table mb-0"><thead class="table-light"><tr><th>Nama</th><th>User/Sandi</th><th>Aksi</th></tr></thead><tbody id="t-siswa"></tbody></table></div>
     </div>
 
     <div id="p-set" class="hidden">
-        <h4 class="fw-bold mb-4">Pengaturan Identitas & Anti-Curang</h4>
+        <h4 class="fw-bold mb-4">Pengaturan</h4>
         <div class="card p-4 mx-auto" style="max-width: 600px;">
-            <div class="mb-3"><label class="form-label fw-bold">Nama Sekolah</label><input type="text" id="set-nama" class="form-control"></div>
-            <div class="mb-3"><label class="form-label fw-bold">Judul Aplikasi</label><input type="text" id="set-judul" class="form-control"></div>
-            <div class="mb-3"><label class="form-label fw-bold">URL Logo</label><input type="text" id="set-logo" class="form-control"></div>
-            <hr>
-            <div class="mb-4">
-                <label class="form-label fw-bold text-danger">Pesan Anti-Curang</label>
-                <textarea id="set-curang" class="form-control border-danger" rows="3"></textarea>
-                <div class="form-text">Pesan yang muncul jika siswa berpindah tab/keluar aplikasi.</div>
-            </div>
-            <button onclick="saveSettings()" class="btn btn-primary w-100 fw-bold py-2">Simpan Semua</button>
+            <div class="mb-3"><label>Nama Sekolah</label><input type="text" id="set-nama" class="form-control"></div>
+            <div class="mb-3"><label>Logo URL</label><input type="text" id="set-logo" class="form-control"></div>
+            <div class="mb-3"><label>Pesan Curang</label><textarea id="set-curang" class="form-control"></textarea></div>
+            <button onclick="saveSettings()" class="btn btn-primary w-100">Simpan</button>
         </div>
     </div>
 </div>
@@ -146,72 +108,78 @@
     function show(p) {
         ['dash','bank','siswa','set'].forEach(i => { document.getElementById('p-'+i).classList.add('hidden'); document.getElementById('n-'+i).classList.remove('active'); });
         document.getElementById('p-'+p).classList.remove('hidden'); document.getElementById('n-'+p).classList.add('active');
+        if(p === 'dash') renderMonitoring();
     }
 
-    function saveSettings() {
-        db.ref('pengaturan').set({
-            nama_sekolah: document.getElementById('set-nama').value,
-            judul_app: document.getElementById('set-judul').value,
-            logo_url: document.getElementById('set-logo').value,
-            pesan_curang: document.getElementById('set-curang').value
-        }).then(() => Swal.fire('Berhasil','Pengaturan tersimpan','success'));
+    // FUNGSI IMPORT SISWA (AKTIF)
+    function uploadSiswa() {
+        const file = document.getElementById('s-file').files[0];
+        if(!file) return Swal.fire('Error','Pilih file!','error');
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, {type: 'array'});
+            const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+            json.forEach(item => {
+                if(item.nama) db.ref('siswa').push({ nama: item.nama, kelas: item.kelas || "-", username: item.username, sandi: item.sandi || "123", status: "aktif" });
+            });
+            Swal.fire('Sukses','Data diimport','success');
+        };
+        reader.readAsArrayBuffer(file);
     }
 
-    db.ref('pengaturan').on('value', snap => {
-        const d = snap.val();
-        if(d) {
-            document.getElementById('set-nama').value = d.nama_sekolah || "";
-            document.getElementById('set-judul').value = d.judul_app || "";
-            document.getElementById('set-logo').value = d.logo_url || "";
-            document.getElementById('set-curang').value = d.pesan_curang || "Anda terindikasi curang!";
-        }
-    });
-
-    function addManual() {
-        const n = document.getElementById('m-nama').value, k = document.getElementById('m-kelas').value, u = document.getElementById('m-user').value, p = document.getElementById('m-pass').value;
-        if(!n || !k || !u || !p) return Swal.fire('Error','Lengkapi data!','error');
-        db.ref('siswa').push({ nama: n, kelas: k, username: u, sandi: p, status: "aktif" }).then(() => { Swal.fire('Sukses','Siswa disimpan','success'); });
-    }
-
-    db.ref('siswa').on('value', snap => {
-        let h = "";
-        snap.forEach(c => {
-            const v = c.val();
-            h += `<tr><td>${v.nama}</td><td>${v.kelas}</td><td>${v.username} / ${v.sandi}</td><td><button onclick="db.ref('siswa/${c.key}').remove()" class="btn btn-sm btn-danger">Hapus</button></td></tr>`;
+    // MONITORING & BLOKIR
+    function renderMonitoring() {
+        db.ref('siswa').on('value', snap => {
+            let h = "";
+            snap.forEach(s => {
+                const v = s.val();
+                let badge = v.status === 'curang' ? '<span class="badge bg-danger">Curang!</span>' : (v.status === 'blokir' ? '<span class="badge bg-dark">Blokir</span>' : '<span class="badge bg-success">Aktif</span>');
+                h += `<tr>
+                    <td>${v.nama}</td><td>${v.kelas}</td><td>${badge}</td>
+                    <td>
+                        <button onclick="updateStatus('${s.key}', 'blokir')" class="btn btn-xs btn-danger">Blokir</button>
+                        <button onclick="updateStatus('${s.key}', 'aktif')" class="btn btn-xs btn-success">Unblock</button>
+                    </td>
+                </tr>`;
+            });
+            document.getElementById('list-monitoring').innerHTML = h;
         });
-        document.getElementById('t-siswa').innerHTML = h;
-    });
+    }
+
+    function updateStatus(key, st) { db.ref('siswa/' + key).update({ status: st }); }
 
     function uploadSoal() {
-        const f = document.getElementById('bs-file').files[0], m = document.getElementById('bs-mapel').value, t = document.getElementById('bs-tgl').value;
-        if(!f || !m) return;
+        const f = document.getElementById('bs-file').files[0];
         const reader = new FileReader();
         reader.onload = e => {
             const data = new Uint8Array(e.target.result), wb = XLSX.read(data, {type:'array'}), json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-            db.ref('bank_soal').push({ mapel: m, kelas: document.getElementById('bs-kelas').value, durasi: document.getElementById('bs-durasi').value, tanggal: t, showNilai: document.getElementById('bs-show-nilai').value, soal: json, status: "aktif" }).then(() => Swal.fire('Berhasil','Soal Uploaded','success'));
+            db.ref('bank_soal').push({ mapel: document.getElementById('bs-mapel').value, kelas: document.getElementById('bs-kelas').value, durasi: document.getElementById('bs-durasi').value, tanggal: document.getElementById('bs-tgl').value, showNilai: document.getElementById('bs-show-nilai').value, soal: json, status: "aktif" }).then(() => Swal.fire('Ok','Uploaded','success'));
         };
         reader.readAsArrayBuffer(f);
     }
 
     db.ref('bank_soal').on('value', snap => {
         let h = "";
-        snap.forEach(c => {
-            const v = c.val();
-            h += `<tr><td>${v.mapel}</td><td>${v.kelas}</td><td>${v.tanggal}</td><td>${v.showNilai}</td><td>${v.status}</td><td><button onclick="db.ref('bank_soal/${c.key}').remove()" class="btn btn-sm btn-danger">Hapus</button></td></tr>`;
-        });
+        snap.forEach(c => { h += `<tr><td>${c.val().mapel}</td><td>${c.val().kelas}</td><td><button onclick="db.ref('bank_soal/${c.key}').remove()" class="btn btn-danger btn-sm">X</button></td></tr>`; });
         document.getElementById('t-soal').innerHTML = h;
     });
 
-    function renderMonitoring() {
-        db.ref('hasil').once('value', snap => {
-            let h = "";
-            snap.forEach(c => {
-                const v = c.val();
-                h += `<tr><td>${v.nama}</td><td>${v.kelas}</td><td>${v.mapel}</td><td>${v.nilai}</td><td>${v.waktu}</td><td><button onclick="db.ref('hasil/${c.key}').remove().then(()=>renderMonitoring())" class="btn btn-sm btn-danger">Hapus</button></td></tr>`;
-            });
-            document.getElementById('list-hasil-body').innerHTML = h;
-        });
+    function addManual() {
+        db.ref('siswa').push({ nama: document.getElementById('m-nama').value, kelas: document.getElementById('m-kelas').value, username: document.getElementById('m-user').value, sandi: document.getElementById('m-pass').value, status: "aktif" });
     }
+
+    db.ref('siswa').on('value', snap => {
+        let h = "";
+        snap.forEach(c => { h += `<tr><td>${c.val().nama}</td><td>${c.val().username}/${c.val().sandi}</td><td><button onclick="db.ref('siswa/${c.key}').remove()" class="btn btn-danger btn-sm">Hapus</button></td></tr>`; });
+        document.getElementById('t-siswa').innerHTML = h;
+    });
+
+    function saveSettings() {
+        db.ref('pengaturan').set({ nama_sekolah: document.getElementById('set-nama').value, logo_url: document.getElementById('set-logo').value, pesan_curang: document.getElementById('set-curang').value });
+    }
+
+    renderMonitoring();
 </script>
 </body>
 </html>
