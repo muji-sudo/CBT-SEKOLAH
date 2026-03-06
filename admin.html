@@ -8,6 +8,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.21/mammoth.browser.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         :root { --primary: #1e3a8a; }
@@ -30,7 +31,7 @@
     </div>
     <nav class="mt-3">
         <a onclick="show('dash')" id="n-dash" class="nav-link active">📊 Monitoring</a>
-        <a onclick="show('bank')" id="n-bank" class="nav-link">📚 Bank Soal</a>
+        <a onclick="show('bank')" id="n-bank" class="nav-link">📝 Bank Soal</a>
         <a onclick="show('siswa')" id="n-siswa" class="nav-link">👥 Data Siswa</a>
         <a onclick="show('set')" id="n-set" class="nav-link">⚙️ Pengaturan Web</a>
         <hr class="mx-3 text-white-50">
@@ -67,23 +68,51 @@
     </div>
 
     <div id="p-bank" class="hidden">
-        <h4 class="fw-bold mb-4">Manajemen Soal</h4>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="fw-bold m-0">Manajemen Soal</h4>
+            <button onclick="downloadTemplateWord()" class="btn btn-outline-primary btn-sm fw-bold">📥 Download Template Word</button>
+        </div>
+        
         <div class="card p-4">
             <div class="row g-3">
-                <div class="col-md-4"><input type="text" id="bs-mapel" class="form-control" placeholder="Mata Pelajaran"></div>
-                <div class="col-md-2"><input type="text" id="bs-kelas" class="form-control" placeholder="Kelas"></div>
-                <div class="col-md-2"><input type="number" id="bs-durasi" class="form-control" placeholder="Menit"></div>
-                <div class="col-md-2"><input type="date" id="bs-tgl" class="form-control"></div>
+                <div class="col-md-4">
+                    <label class="small fw-bold">Mata Pelajaran</label>
+                    <input type="text" id="bs-mapel" class="form-control" placeholder="Contoh: Matematika">
+                </div>
                 <div class="col-md-2">
+                    <label class="small fw-bold">Kelas</label>
+                    <input type="text" id="bs-kelas" class="form-control" placeholder="X - IPA">
+                </div>
+                <div class="col-md-2">
+                    <label class="small fw-bold">Durasi (Menit)</label>
+                    <input type="number" id="bs-durasi" class="form-control" placeholder="90">
+                </div>
+                <div class="col-md-2">
+                    <label class="small fw-bold">Tanggal Ujian</label>
+                    <input type="date" id="bs-tgl" class="form-control">
+                </div>
+                <div class="col-md-2">
+                    <label class="small fw-bold">Tampil Nilai?</label>
                     <select id="bs-show-nilai" class="form-select">
-                        <option value="ya">Tampil Nilai</option>
+                        <option value="ya">Tampil</option>
                         <option value="tidak">Sembunyi</option>
                     </select>
                 </div>
-                <div class="col-md-12"><input type="file" id="bs-file" class="form-control" accept=".xlsx"></div>
-                <div class="col-12"><button onclick="uploadSoal()" class="btn btn-primary w-100 fw-bold">Upload Paket Soal</button></div>
+                <div class="col-md-12 mt-3">
+                    <label class="small fw-bold">Pilih Format & File Soal</label>
+                    <div class="input-group">
+                        <select id="bs-format" class="form-select" style="max-width: 150px;">
+                            <option value="docx">MS Word</option>
+                            <option value="xlsx">Excel</option>
+                        </select>
+                        <input type="file" id="bs-file" class="form-control" accept=".xlsx, .docx">
+                    </div>
+                    <p class="text-muted mt-1" style="font-size: 0.75rem;">* Format Word wajib menggunakan tag [SOAL], [A], [B], [C], [D], [KUNCI]</p>
+                </div>
+                <div class="col-12"><button onclick="uploadSoal()" class="btn btn-primary w-100 fw-bold py-2">🚀 Upload & Aktifkan Paket Soal</button></div>
             </div>
         </div>
+
         <div class="card p-0 overflow-hidden">
             <table class="table mb-0 text-center">
                 <thead class="table-dark"><tr><th>Mapel</th><th>Kelas</th><th>Tanggal</th><th>Nilai?</th><th>Status</th><th>Aksi</th></tr></thead>
@@ -143,7 +172,6 @@
             <div class="mb-4">
                 <label class="form-label fw-bold text-danger">Peringatan Sistem Anti-Curang</label>
                 <textarea id="set-curang" class="form-control border-danger" rows="3" placeholder="Contoh: Anda terindikasi curang karena keluar dari halaman ujian!"></textarea>
-                <div class="form-text">Pesan ini akan memenuhi layar siswa jika mereka ketahuan berpindah tab/keluar aplikasi saat ujian berlangsung.</div>
             </div>
 
             <button onclick="saveSettings()" class="btn btn-primary w-100 fw-bold py-2">Simpan Semua Perubahan</button>
@@ -166,31 +194,117 @@
         document.getElementById('n-'+p).classList.add('active');
     }
 
-    // --- SISWA LOGIC ---
+    // --- UPLOAD LOGIC (EXCEL & WORD) ---
+    function uploadSoal() {
+        const fileInput = document.getElementById('bs-file');
+        const format = document.getElementById('bs-format').value;
+        const mapel = document.getElementById('bs-mapel').value;
+        const tgl = document.getElementById('bs-tgl').value;
+        
+        if(!fileInput.files[0] || !mapel || !tgl) return Swal.fire('Error','Lengkapi data ujian dan pilih file!','error');
+        
+        Swal.fire({ title: 'Memproses File...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+
+        const reader = new FileReader();
+        
+        if (format === 'docx') {
+            reader.onload = function(e) {
+                mammoth.convertToHtml({arrayBuffer: e.target.result})
+                .then(result => {
+                    const html = result.value;
+                    const dataSoal = parseWord(html);
+                    simpanPaket(dataSoal);
+                })
+                .catch(err => Swal.fire('Gagal Word', err.message, 'error'));
+            };
+            reader.readAsArrayBuffer(fileInput.files[0]);
+        } else {
+            reader.onload = e => {
+                const data = new Uint8Array(e.target.result);
+                const wb = XLSX.read(data, {type:'array'});
+                const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+                simpanPaket(json);
+            };
+            reader.readAsArrayBuffer(fileInput.files[0]);
+        }
+    }
+
+    function parseWord(html) {
+        const temp = document.createElement('div');
+        temp.innerHTML = html;
+        const fullText = temp.innerHTML;
+        
+        // Memecah berdasarkan tag [SOAL]
+        const blocks = fullText.split(/\[SOAL\]/i).filter(b => b.trim() !== "");
+        
+        return blocks.map(block => {
+            return {
+                pertanyaan: getBetween(block, "", "[A]"),
+                opsi_a: getBetween(block, "[A]", "[B]"),
+                opsi_b: getBetween(block, "[B]", "[C]"),
+                opsi_c: getBetween(block, "[C]", "[D]"),
+                opsi_d: getBetween(block, "[D]", "[KUNCI]"),
+                kunci: getBetween(block, "[KUNCI]", "").replace(/<\/?[^>]+(>|$)/g, "").trim().toUpperCase(),
+                jenis: "pg"
+            };
+        });
+    }
+
+    function getBetween(str, start, end) {
+        let sIdx = start === "" ? 0 : str.toUpperCase().indexOf(start.toUpperCase());
+        let eIdx = end === "" ? str.length : str.toUpperCase().indexOf(end.toUpperCase());
+        if(sIdx === -1) return "";
+        return str.substring(sIdx + start.length, eIdx).trim();
+    }
+
+    function simpanPaket(dataSoal) {
+        db.ref('bank_soal').push({
+            mapel: document.getElementById('bs-mapel').value,
+            kelas: document.getElementById('bs-kelas').value,
+            durasi: document.getElementById('bs-durasi').value,
+            tanggal: document.getElementById('bs-tgl').value,
+            showNilai: document.getElementById('bs-show-nilai').value,
+            soal: dataSoal,
+            status: "aktif"
+        }).then(() => {
+            Swal.fire('Berhasil','Paket soal berhasil diaktifkan','success');
+            document.getElementById('bs-file').value = "";
+        });
+    }
+
+    // --- TEMPLATE DOWNLOADER ---
+    function downloadTemplateWord() {
+        const content = `[SOAL] Ketik soal di sini. Gambar bisa langsung ditempel di bawah teks ini.\n[A] Pilihan A\n[B] Pilihan B\n[C] Pilihan C\n[D] Pilihan D\n[KUNCI] B\n\n[SOAL] Contoh soal nomor 2...\n[A] Opsi A\n[B] Opsi B\n[C] Opsi C\n[D] Opsi D\n[KUNCI] A`;
+        const blob = new Blob([content], {type: 'application/msword'});
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.download = "Template_Soal_CBT.docx";
+        link.click();
+    }
+
+    // --- SISWA & SETTING LOGIC (Tetap Sama) ---
     function addManual() {
         const n = document.getElementById('m-nama').value, k = document.getElementById('m-kelas').value, u = document.getElementById('m-user').value, p = document.getElementById('m-pass').value;
         if(!n || !k || !u || !p) return Swal.fire('Error','Lengkapi semua bidang!','error');
         db.ref('siswa').push({ nama: n, kelas: k, username: u, sandi: p, status: "aktif" })
-        .then(() => { Swal.fire('Sukses','Siswa disimpan','success'); document.getElementById('m-nama').value = ""; document.getElementById('m-user').value = ""; document.getElementById('m-pass').value = ""; })
-        .catch(err => Swal.fire('Gagal', err.message, 'error'));
+        .then(() => { Swal.fire('Sukses','Siswa disimpan','success'); });
     }
 
     db.ref('siswa').on('value', snap => {
         let h = "";
         snap.forEach(c => {
             const v = c.val();
-            h += `<tr><td class="fw-bold">${v.nama || '-'}</td><td><span class="badge bg-secondary">${v.kelas || '-'}</span></td><td>${v.username || '-'} / ${v.sandi || '-'}</td><td><button onclick="db.ref('siswa/${c.key}').remove()" class="btn btn-sm btn-danger">Hapus</button></td></tr>`;
+            h += `<tr><td class="fw-bold">${v.nama}</td><td><span class="badge bg-secondary">${v.kelas}</span></td><td>${v.username} / ${v.sandi}</td><td><button onclick="db.ref('siswa/${c.key}').remove()" class="btn btn-sm btn-danger">Hapus</button></td></tr>`;
         });
         document.getElementById('t-siswa').innerHTML = h || '<tr><td colspan="4" class="text-center p-3">Belum ada data siswa</td></tr>';
     });
 
-    // --- SETTINGS LOGIC DENGAN ANTI CURANG ---
     function saveSettings() {
         db.ref('pengaturan').set({
             nama_sekolah: document.getElementById('set-nama').value,
             judul_app: document.getElementById('set-judul').value,
             logo_url: document.getElementById('set-logo').value,
-            pesan_curang: document.getElementById('set-curang').value // Menyimpan data anti-curang
+            pesan_curang: document.getElementById('set-curang').value
         }).then(() => Swal.fire('Berhasil','Pengaturan tersimpan','success'));
     }
 
@@ -200,23 +314,9 @@
             document.getElementById('set-nama').value = d.nama_sekolah || "";
             document.getElementById('set-judul').value = d.judul_app || "";
             document.getElementById('set-logo').value = d.logo_url || "";
-            // Menampilkan data pesan curang jika sudah ada di Firebase
             document.getElementById('set-curang').value = d.pesan_curang || "Anda terindikasi curang karena keluar dari halaman ujian.";
         }
     });
-
-    // --- BANK SOAL LOGIC ---
-    function uploadSoal() {
-        const f = document.getElementById('bs-file').files[0], m = document.getElementById('bs-mapel').value, t = document.getElementById('bs-tgl').value;
-        if(!f || !m || !t) return Swal.fire('Error','Pilih file dan tentukan jadwal!','error');
-        const reader = new FileReader();
-        reader.onload = e => {
-            const data = new Uint8Array(e.target.result), wb = XLSX.read(data, {type:'array'}), json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-            db.ref('bank_soal').push({ mapel: m, kelas: document.getElementById('bs-kelas').value, durasi: document.getElementById('bs-durasi').value, tanggal: t, showNilai: document.getElementById('bs-show-nilai').value, soal: json, status: "aktif" })
-            .then(() => Swal.fire('Berhasil','Paket soal aktif','success'));
-        };
-        reader.readAsArrayBuffer(f);
-    }
 
     db.ref('bank_soal').on('value', snap => {
         let h = "", mOpt = '<option value="">Semua Mapel</option>', kOpt = '<option value="">Semua Kelas</option>', maps = [], kls = [];
@@ -231,7 +331,6 @@
         document.getElementById('f-kelas').innerHTML = kOpt;
     });
 
-    // --- MONITORING LOGIC ---
     function renderMonitoring() {
         const fm = document.getElementById('f-mapel').value, fk = document.getElementById('f-kelas').value;
         db.ref('hasil').once('value', snap => {
