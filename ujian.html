@@ -3,283 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CBT PRO - Mobile Friendly</title>
+    <title>CBT PRO - Ujian</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        .option-card { border: 2px solid #f1f5f9; cursor: pointer; transition: 0.2s; }
-        .option-card:active { transform: scale(0.98); }
-        input:checked + .option-content { color: #1e40af; font-weight: 700; }
-        @media (max-width: 640px) {
-            .btn-nav { width: 100%; margin-bottom: 10px; }
-            .nav-container { flex-direction: column-reverse; }
-        }
-    </style>
 </head>
 <body class="bg-slate-50 min-h-screen select-none relative">
 
-    <div id="box-curang" class="hidden fixed inset-0 bg-red-600 z-[9999] flex-col items-center justify-center text-white p-6 text-center">
-        <svg class="w-24 h-24 mb-6 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-        <h1 class="text-3xl md:text-5xl font-black mb-4 uppercase tracking-widest">PERINGATAN!</h1>
-        <p id="teks-curang" class="text-lg md:text-2xl font-bold mb-8 max-w-2xl leading-relaxed">Anda terindikasi curang.</p>
-        <button onclick="keluarSistem()" class="bg-white text-red-600 font-bold py-4 px-10 rounded-2xl shadow-2xl hover:bg-slate-100 hover:scale-105 transition-all text-lg">
-            Kembali ke Login
-        </button>
+    <div id="box-curang" class="hidden fixed inset-0 bg-red-600 z-[9999] flex-col items-center justify-center text-center p-6">
+        <h1 class="text-white text-6xl font-black mb-4">TERDETEKSI CURANG!</h1>
+        <p class="text-white text-xl" id="pesan-curang">Anda keluar dari halaman ujian. Akun Anda telah DIBLOKIR.</p>
+        <button onclick="window.location.href='index.html'" class="mt-8 bg-white text-red-600 px-10 py-4 rounded-full font-bold">KEMBALI KE LOGIN</button>
     </div>
 
-    <div id="modal-kumpul" class="hidden fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full text-center shadow-2xl border-t-8 border-green-500 transform transition-all">
-            <div class="w-20 h-20 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-5 shadow-inner">
-                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
-            </div>
-            <h3 class="text-2xl font-black text-slate-800 mb-2">Kumpulkan Ujian?</h3>
-            <p class="text-slate-500 mb-8 font-medium text-sm">Pastikan semua jawaban telah terisi. Anda tidak bisa kembali setelah menekan tombol kirim.</p>
-            <div class="flex flex-col md:flex-row gap-3">
-                <button onclick="batalKumpul()" class="w-full bg-slate-100 text-slate-600 font-bold py-3 rounded-xl shadow-sm hover:bg-slate-200">Batal</button>
-                <button onclick="processScore()" class="w-full bg-green-500 text-white font-black py-3 rounded-xl shadow-lg hover:bg-green-600">Ya, Kirim!</button>
-            </div>
+    <div id="wrapper-ujian" class="p-4">
+        <div class="max-w-4xl mx-auto bg-white shadow-lg rounded-xl p-6 mt-10">
+            <h2 id="display-mapel" class="text-2xl font-bold mb-4">Memuat Soal...</h2>
+            <div id="konten-soal" class="space-y-4"></div>
+            <button onclick="selesaiUjian()" class="mt-10 w-full bg-green-600 text-white py-4 rounded-xl font-bold">SELESAI UJIAN</button>
         </div>
     </div>
 
-    <div id="wrapper-ujian">
-        <header class="bg-blue-900 text-white p-3 md:p-4 shadow-lg flex justify-between items-center sticky top-0 z-40">
-            <div class="flex items-center gap-2">
-                <div class="bg-yellow-400 text-blue-900 font-bold p-1 md:p-2 rounded text-[10px] md:text-xs">CBT</div>
-                <div class="overflow-hidden flex items-center">
-                    <h2 id="n-siswa" class="font-bold text-yellow-400 text-sm md:text-base truncate max-w-[120px]">...</h2>
-                    <span id="h-mapel" class="text-white text-xs md:text-sm ml-2 font-normal opacity-90 truncate max-w-[120px]"></span>
-                </div>
-            </div>
-            <div class="flex items-center gap-2">
-                <div id="timer" class="bg-red-600 px-3 py-1 rounded-lg font-mono font-bold text-sm md:text-xl">00:00</div>
-                <button onclick="keluarSistem()" class="text-white bg-blue-800 p-2 rounded-lg"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg></button>
-            </div>
-        </header>
+    <script>
+        const firebaseConfig = { apiKey: "AIzaSyBGl1WySSrPU_86T0SOKi0FhpMdAw8NXLs", databaseURL: "https://cbt-v1-c3387-default-rtdb.asia-southeast1.firebasedatabase.app" };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-        <main class="container mx-auto p-4 max-w-4xl">
-            <div id="box-start" class="bg-white p-6 md:p-10 rounded-3xl shadow-xl text-center mt-4">
-                <div id="loading-init"><p class="animate-pulse font-bold">Sinkronisasi Jadwal...</p></div>
+        const siswa = JSON.parse(sessionStorage.getItem('siswa_aktif'));
+        if(!siswa) window.location.href = "index.html";
+
+        let isExamActive = true;
+        let soalData = [];
+        let jawabanUser = {};
+
+        // DETEKSI CURANG (Pindah Tab)
+        window.addEventListener('blur', () => {
+            if(isExamActive) {
+                isExamActive = false;
+                // Update status siswa jadi blokir di Firebase
+                db.ref('siswa/' + siswa.key).update({ status: 'blokir' });
                 
-                <div id="ready-ui" class="hidden animate-fade-in">
-                    <h3 class="text-xl font-bold mb-4">Informasi Ujian</h3>
-                    <div class="bg-blue-50 p-4 rounded-2xl text-left mb-6 border border-blue-100">
-                        <p class="text-xs text-blue-500 uppercase font-bold">Mata Pelajaran</p>
-                        <p id="t-mapel" class="text-2xl font-black text-blue-900">-</p>
-                    </div>
-                    <button onclick="startNow()" class="bg-blue-700 text-white w-full py-4 rounded-2xl font-black shadow-lg hover:bg-blue-800 transition">MULAI KERJAKAN</button>
-                </div>
-
-                <div id="t-no" class="hidden">
-                    <div class="bg-red-50 p-6 rounded-2xl mb-4 text-red-600 font-bold border border-red-100">Jadwal ujian belum tersedia atau sudah berakhir.</div>
-                    <button onclick="keluarSistem()" class="w-full bg-slate-800 text-white py-3 rounded-xl font-bold">KELUAR</button>
-                </div>
-            </div>
-
-            <div id="box-soal" class="hidden mt-4">
-                <div class="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
-                    <div class="bg-slate-800 p-3 md:p-5 text-white flex justify-between items-center">
-                        <span class="font-bold text-sm tracking-widest text-slate-300">SOAL <span id="no-skrg" class="text-yellow-400 text-xl font-black">1</span></span>
-                        <span id="label-tipe" class="text-[10px] bg-blue-600 px-3 py-1 rounded-full uppercase font-bold">PG</span>
-                    </div>
-                    <div class="p-5 md:p-8">
-                        <div id="soal-teks" class="text-base md:text-lg text-slate-800 mb-6 leading-relaxed font-medium"></div>
-                        <div id="opsi-list" class="space-y-3"></div>
-                    </div>
-                </div>
-
-                <div class="mt-6 flex flex-col md:flex-row gap-3 nav-container">
-                    <button id="btn-prev" onclick="nav(-1)" class="btn-nav bg-white border-2 border-slate-200 py-3 px-8 rounded-xl font-bold text-slate-600">KEMBALI</button>
-                    <div class="flex-grow"></div>
-                    <button id="btn-next" onclick="nav(1)" class="btn-nav bg-blue-700 text-white py-3 px-10 rounded-xl font-bold shadow-lg">SELANJUTNYA</button>
-                    <button id="btn-finish" onclick="finish()" class="btn-nav hidden bg-green-500 text-white py-3 px-10 rounded-xl font-black shadow-lg">KUMPULKAN</button>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <div id="box-selesai" class="hidden min-h-screen items-center justify-center p-4 bg-slate-50">
-        <div class="bg-white p-8 md:p-14 rounded-3xl shadow-2xl text-center max-w-xl w-full border-t-8 border-green-500">
-            <div class="w-24 h-24 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
-                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
-            </div>
-            <h2 class="text-3xl font-black text-slate-800 mb-4">Jawaban Terkirim</h2>
-            <div class="h-1.5 w-24 bg-green-500 mx-auto mb-8 rounded-full"></div>
-            
-            <div id="teks-nilai" class="text-2xl md:text-3xl font-black text-blue-600 mb-10 py-6 bg-blue-50 rounded-2xl border border-blue-100"></div>
-            
-            <button onclick="keluarSistem()" class="bg-slate-800 text-white font-black py-4 px-10 rounded-2xl shadow-lg hover:scale-105 transition-all w-full">
-                KEMBALI KE LOGIN
-            </button>
-        </div>
-    </div>
-
-<script>
-    const firebaseConfig = { apiKey: "AIzaSyBGl1WySSrPU_86T0SOKi0FhpMdAw8NXLs", databaseURL: "https://cbt-v1-c3387-default-rtdb.asia-southeast1.firebasedatabase.app" };
-    if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
-    const db = firebase.database();
-
-    const siswa = JSON.parse(sessionStorage.getItem('siswa_aktif'));
-    if(!siswa) window.location.href="index.html";
-    document.getElementById('n-siswa').innerText = siswa.nama;
-
-    let soalData = [], index = 0, paket = null, jawabanUser = {};
-    let isExamActive = false; 
-
-    // AMBIL SETTINGAN PESAN CURANG
-    db.ref('pengaturan').on('value', snap => {
-        const d = snap.val();
-        if(d && d.pesan_curang) {
-            document.getElementById('teks-curang').innerText = d.pesan_curang;
-        }
-    });
-
-    // SISTEM ANTI CURANG Pindah Tab / Layar
-    function periksaKecurangan() {
-        if (isExamActive) {
-            isExamActive = false; 
-            document.getElementById('wrapper-ujian').style.display = 'none';
-            const boxCurang = document.getElementById('box-curang');
-            boxCurang.classList.remove('hidden');
-            boxCurang.classList.add('flex');
-        }
-    }
-    document.addEventListener("visibilitychange", () => {
-        if (document.hidden) periksaKecurangan();
-    });
-    window.addEventListener("blur", () => {
-        periksaKecurangan();
-    });
-
-    db.ref('bank_soal').on('value', snap => {
-        const tglSkrg = new Date().toLocaleDateString('en-CA');
-        let found = false;
-        snap.forEach(child => {
-            const d = child.val();
-            if((String(d.kelas).toLowerCase() === String(siswa.kelas).toLowerCase() || d.kelas === "Semua") && d.tanggal === tglSkrg && d.status === "aktif") {
-                paket = d; found = true;
-                document.getElementById('t-mapel').innerText = d.mapel;
-                document.getElementById('h-mapel').innerText = "| " + d.mapel; 
-                document.getElementById('loading-init').classList.add('hidden');
-                document.getElementById('ready-ui').classList.remove('hidden');
+                document.getElementById('wrapper-ujian').style.display = 'none';
+                document.getElementById('box-curang').classList.remove('hidden');
+                document.getElementById('box-curang').classList.add('flex');
             }
         });
-        if(!found) { document.getElementById('loading-init').classList.add('hidden'); document.getElementById('t-no').classList.remove('hidden'); }
-    });
 
-    function startNow() {
-        setTimeout(() => { isExamActive = true; }, 1000); 
-        document.getElementById('box-start').classList.add('hidden');
-        document.getElementById('box-soal').classList.remove('hidden');
-        soalData = paket.soal.sort(() => Math.random() - 0.5);
-        renderSoal();
-        startTimer(paket.durasi || 60);
-    }
-
-    function renderSoal() {
-        const s = soalData[index];
-        const tipe = (s.jenis || s.JENIS || "pg").toLowerCase();
-        document.getElementById('no-skrg').innerText = index + 1;
-        document.getElementById('soal-teks').innerHTML = s.pertanyaan || s.PERTANYAAN;
-        document.getElementById('label-tipe').innerText = (tipe === "km") ? "Pilihan Ganda Kompleks" : (tipe === "bs" ? "Benar/Salah" : "Pilihan Ganda");
-        
-        let html = "";
-        ['A','B','C','D','E'].forEach(o => {
-            const teksOpsi = s['opsi_'+o.toLowerCase()] || s['OPSI_'+o];
-            if(teksOpsi || (tipe === 'bs' && (o === 'A' || o === 'B'))) {
-                const checked = (jawabanUser[index] || []).includes(o);
-                const inputType = (tipe === "km") ? "checkbox" : "radio";
-                html += `
-                <label class="option-card flex items-center p-4 rounded-xl bg-white shadow-sm border-2 ${checked?'border-blue-500 bg-blue-50':'border-slate-100'}">
-                    <input type="${inputType}" name="q_ans" value="${o}" ${checked?'checked':''} 
-                        onchange="saveAnswer('${o}', '${inputType}')" class="w-5 h-5 accent-blue-700">
-                    <span class="ml-3 text-slate-700 option-content"><b>${o}.</b> ${teksOpsi || (o==='A'?'BENAR':'SALAH')}</span>
-                </label>`;
-            }
+        // Load Paket Soal
+        db.ref('bank_soal').once('value', snap => {
+            snap.forEach(c => {
+                const p = c.val();
+                if(p.status === "aktif") {
+                    document.getElementById('display-mapel').innerText = p.mapel;
+                    soalData = p.soal;
+                    renderSoal();
+                }
+            });
         });
-        document.getElementById('opsi-list').innerHTML = html;
-        document.getElementById('btn-prev').style.visibility = (index === 0) ? 'hidden' : 'visible';
-        if(index === soalData.length - 1) {
-            document.getElementById('btn-next').classList.add('hidden');
-            document.getElementById('btn-finish').classList.remove('hidden');
-        } else {
-            document.getElementById('btn-next').classList.remove('hidden');
-            document.getElementById('btn-finish').classList.add('hidden');
+
+        function renderSoal() {
+            let h = "";
+            soalData.forEach((s, i) => {
+                h += `<div class="p-4 border rounded-lg">
+                    <p class="font-bold mb-2">${i+1}. ${s.pertanyaan}</p>
+                    <div class="space-y-2">
+                        <label class="block"><input type="radio" name="soal${i}" onclick="jawabanUser[${i}]='A'"> ${s.opsi_a}</label>
+                        <label class="block"><input type="radio" name="soal${i}" onclick="jawabanUser[${i}]='B'"> ${s.opsi_b}</label>
+                        <label class="block"><input type="radio" name="soal${i}" onclick="jawabanUser[${i}]='C'"> ${s.opsi_c}</label>
+                        <label class="block"><input type="radio" name="soal${i}" onclick="jawabanUser[${i}]='D'"> ${s.opsi_d}</label>
+                    </div>
+                </div>`;
+            });
+            document.getElementById('konten-soal').innerHTML = h;
         }
-    }
 
-    function saveAnswer(val, type) {
-        if(!jawabanUser[index]) jawabanUser[index] = [];
-        if(type === 'radio') { jawabanUser[index] = [val]; } 
-        else {
-            if(jawabanUser[index].includes(val)) { jawabanUser[index] = jawabanUser[index].filter(v => v !== val); } 
-            else { jawabanUser[index].push(val); }
+        function selesaiUjian() {
+            isExamActive = false;
+            let benar = 0;
+            soalData.forEach((s, i) => {
+                if(jawabanUser[i] === s.kunci) benar++;
+            });
+            const nilai = Math.round((benar / soalData.length) * 100);
+
+            db.ref('hasil').push({
+                nama: siswa.nama, kelas: siswa.kelas,
+                mapel: document.getElementById('display-mapel').innerText,
+                nilai: nilai
+            }).then(() => {
+                Swal.fire('Berhasil', 'Ujian Selesai! Nilai Anda: ' + nilai, 'success')
+                .then(() => window.location.href = "index.html");
+            });
         }
-        renderSoal(); 
-    }
-
-    function nav(dir) { index += dir; renderSoal(); window.scrollTo(0,0); }
-
-    function startTimer(min) {
-        let sec = min * 60;
-        const timerObj = setInterval(() => {
-            let m = Math.floor(sec / 60), s = sec % 60;
-            document.getElementById('timer').innerText = `${m}:${s < 10 ? '0' + s : s}`;
-            if(sec <= 0) { clearInterval(timerObj); processScore(); }
-            sec--;
-        }, 1000);
-    }
-
-    // FUNGSI MEMANGGIL MODAL CUSTOM (Bukan SweetAlert lagi)
-    function finish() {
-        document.getElementById('modal-kumpul').classList.remove('hidden');
-    }
-
-    // FUNGSI BATAL KUMPUL
-    function batalKumpul() {
-        document.getElementById('modal-kumpul').classList.add('hidden');
-    }
-
-    function processScore() {
-        // Tutup Modal Custom jika terbuka
-        document.getElementById('modal-kumpul').classList.add('hidden');
-        
-        isExamActive = false; 
-        Swal.fire({ title: 'Sedang Memproses...', allowOutsideClick: false, showConfirmButton: false, didOpen: () => { Swal.showLoading(); } });
-
-        let benar = 0;
-        soalData.forEach((s, i) => {
-            const kunci = String(s.kunci || s.KUNCI || "").replace(/\s/g, '').split(',').sort().join(',');
-            const ans = (jawabanUser[i] || []).sort().join(',');
-            if(ans === kunci && kunci !== "") benar++;
-        });
-        const nilai = Math.round((benar / soalData.length) * 100);
-        
-        db.ref('hasil').push({
-            nama: siswa.nama, kelas: siswa.kelas, mapel: paket.mapel,
-            nilai: nilai, waktu: new Date().toLocaleString()
-        }).then(() => {
-            Swal.close();
-            
-            document.getElementById('wrapper-ujian').style.display = 'none';
-
-            let teksAkhir = "Alhamdulillah";
-            if(paket.showNilai === "ya" || paket.showNilai === "YA" || paket.showNilai === true) {
-                teksAkhir = "Nilai Anda: " + nilai;
-            }
-            document.getElementById('teks-nilai').innerText = teksAkhir;
-            
-            const boxSelesai = document.getElementById('box-selesai');
-            boxSelesai.classList.remove('hidden');
-            boxSelesai.classList.add('flex'); 
-            
-            window.scrollTo(0,0);
-        });
-    }
-
-    function keluarSistem() { sessionStorage.clear(); window.location.href = "index.html"; }
-</script>
+    </script>
 </body>
 </html>
