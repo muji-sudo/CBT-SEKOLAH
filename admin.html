@@ -41,22 +41,6 @@
 <div class="content">
     <div id="p-dash">
         <h4 class="fw-bold mb-4">Monitoring Hasil Ujian</h4>
-        <div class="card p-4">
-            <div class="row g-3 align-items-end">
-                <div class="col-md-3">
-                    <label class="small fw-bold">Mapel</label>
-                    <select id="f-mapel" class="form-select"><option value="">Semua Mapel</option></select>
-                </div>
-                <div class="col-md-3">
-                    <label class="small fw-bold">Kelas</label>
-                    <select id="f-kelas" class="form-select"><option value="">Semua Kelas</option></select>
-                </div>
-                <div class="col-md-6 d-flex gap-2">
-                    <button onclick="renderMonitoring()" class="btn btn-primary w-100">Tampilkan Data</button>
-                    <button onclick="unduhRekap()" class="btn btn-success">Excel</button>
-                </div>
-            </div>
-        </div>
         <div class="card p-0 overflow-hidden">
             <table class="table table-hover mb-0">
                 <thead class="table-light"><tr><th>Nama</th><th>Kelas</th><th>Mapel</th><th>Skor</th><th>Waktu</th><th>Aksi</th></tr></thead>
@@ -65,75 +49,46 @@
         </div>
     </div>
 
-    <div id="p-bank" class="hidden">
-        <h4 class="fw-bold mb-4">Manajemen Soal</h4>
-        <div class="card p-4">
-            <div class="row g-3">
-                <div class="col-md-4"><input type="text" id="bs-mapel" class="form-control" placeholder="Mata Pelajaran"></div>
-                <div class="col-md-2"><input type="text" id="bs-kelas" class="form-control" placeholder="Kelas"></div>
-                <div class="col-md-2"><input type="number" id="bs-durasi" class="form-control" placeholder="Menit"></div>
-                <div class="col-md-2"><input type="date" id="bs-tgl" class="form-control"></div>
-                <div class="col-md-2">
-                    <select id="bs-show-nilai" class="form-select">
-                        <option value="ya">Tampil Nilai</option>
-                        <option value="tidak">Sembunyi</option>
-                    </select>
-                </div>
-                <div class="col-md-12"><input type="file" id="bs-file" class="form-control" accept=".xlsx"></div>
-                <div class="col-12"><button onclick="uploadSoal()" class="btn btn-primary w-100 fw-bold">Upload Paket Soal</button></div>
-            </div>
-        </div>
-        <div class="card p-0 overflow-hidden">
-            <table class="table mb-0 text-center">
-                <thead class="table-dark"><tr><th>Mapel</th><th>Kelas</th><th>Tanggal</th><th>Nilai?</th><th>Status</th><th>Aksi</th></tr></thead>
-                <tbody id="t-soal"></tbody>
-            </table>
-        </div>
-    </div>
-
     <div id="p-siswa" class="hidden">
-        <h4 class="fw-bold mb-4">Data Siswa</h4>
-        <div class="row g-4 mb-4">
-            <div class="col-md-4">
-                <div class="card p-4 h-100">
-                    <h6 class="fw-bold mb-3">Tambah Manual</h6>
-                    <input type="text" id="m-nama" class="form-control mb-2" placeholder="Nama Lengkap">
-                    <input type="text" id="m-kelas" class="form-control mb-2" placeholder="Kelas">
-                    <input type="text" id="m-user" class="form-control mb-2" placeholder="Username">
-                    <input type="text" id="m-pass" class="form-control mb-2" placeholder="Password">
-                    <button onclick="addManual()" class="btn btn-primary w-100 fw-bold">Simpan Siswa</button>
-                </div>
-            </div>
-            <div class="col-md-8">
-                <div class="card p-4 h-100 text-center">
-                    <h6 class="fw-bold mb-3">Import Excel</h6>
-                    <p class="small text-muted">Format: nama, kelas, username, sandi</p>
-                    <input type="file" id="s-file" class="form-control mb-3">
-                    <button onclick="uploadSiswa()" class="btn btn-dark w-100 fw-bold">Proses Import</button>
-                </div>
+        <h4 class="fw-bold mb-4">Data Siswa & Status</h4>
+        <div class="card p-4 mb-4">
+            <h6>Tambah Manual</h6>
+            <div class="row g-2">
+                <div class="col-md-3"><input type="text" id="m-nama" class="form-control" placeholder="Nama"></div>
+                <div class="col-md-2"><input type="text" id="m-kelas" class="form-control" placeholder="Kelas"></div>
+                <div class="col-md-3"><input type="text" id="m-user" class="form-control" placeholder="Username"></div>
+                <div class="col-md-2"><input type="text" id="m-pass" class="form-control" placeholder="Sandi"></div>
+                <div class="col-md-2"><button onclick="addManual()" class="btn btn-primary w-100">Simpan</button></div>
             </div>
         </div>
         <div class="card p-0 overflow-hidden">
             <table class="table mb-0">
-                <thead class="table-light"><tr><th>Nama</th><th>Kelas</th><th>Username / Sandi</th><th>Aksi</th></tr></thead>
+                <thead class="table-light"><tr><th>Nama</th><th>Username</th><th>Status</th><th>Aksi</th></tr></thead>
                 <tbody id="t-siswa"></tbody>
             </table>
         </div>
     </div>
 
     <div id="p-set" class="hidden">
-        <h4 class="fw-bold mb-4">Pengaturan Identitas & Anti-Curang</h4>
+        <h4 class="fw-bold mb-4">Pengaturan Web</h4>
         <div class="card p-4 mx-auto" style="max-width: 600px;">
-            <div class="mb-3"><label class="form-label fw-bold">Nama Sekolah</label><input type="text" id="set-nama" class="form-control"></div>
-            <div class="mb-3"><label class="form-label fw-bold">Judul Aplikasi</label><input type="text" id="set-judul" class="form-control"></div>
-            <div class="mb-3"><label class="form-label fw-bold">URL Logo</label><input type="text" id="set-logo" class="form-control"></div>
-            <hr>
-            <div class="mb-4">
-                <label class="form-label fw-bold text-danger">Pesan Anti-Curang</label>
-                <textarea id="set-curang" class="form-control border-danger" rows="3"></textarea>
-                <div class="form-text">Pesan yang muncul jika siswa berpindah tab/keluar aplikasi.</div>
-            </div>
-            <button onclick="saveSettings()" class="btn btn-primary w-100 fw-bold py-2">Simpan Semua</button>
+            <div class="mb-3"><label>Nama Sekolah</label><input type="text" id="set-nama" class="form-control"></div>
+            <div class="mb-3"><label>Judul Aplikasi</label><input type="text" id="set-judul" class="form-control"></div>
+            <div class="mb-3"><label>URL Logo</label><input type="text" id="set-logo" class="form-control"></div>
+            <div class="mb-3 text-danger"><label>Pesan Anti-Curang</label><textarea id="set-curang" class="form-control"></textarea></div>
+            <button onclick="saveSettings()" class="btn btn-primary w-100">Simpan Perubahan</button>
+        </div>
+    </div>
+    
+    <div id="p-bank" class="hidden">
+        <h4 class="fw-bold mb-4">Bank Soal</h4>
+        <div class="card p-4">
+            <input type="file" id="bs-file" class="form-control mb-2">
+            <input type="text" id="bs-mapel" class="form-control mb-2" placeholder="Mapel">
+            <input type="text" id="bs-kelas" class="form-control mb-2" placeholder="Kelas">
+            <input type="number" id="bs-durasi" class="form-control mb-2" placeholder="Menit">
+            <input type="date" id="bs-tgl" class="form-control mb-2">
+            <button onclick="uploadSoal()" class="btn btn-primary w-100">Upload Soal</button>
         </div>
     </div>
 </div>
@@ -144,8 +99,27 @@
     const db = firebase.database();
 
     function show(p) {
-        ['dash','bank','siswa','set'].forEach(i => { document.getElementById('p-'+i).classList.add('hidden'); document.getElementById('n-'+i).classList.remove('active'); });
-        document.getElementById('p-'+p).classList.remove('hidden'); document.getElementById('n-'+p).classList.add('active');
+        ['dash','bank','siswa','set'].forEach(i => { document.getElementById('p-'+i).classList.add('hidden'); });
+        document.getElementById('p-'+p).classList.remove('hidden');
+    }
+
+    db.ref('siswa').on('value', snap => {
+        let h = "";
+        snap.forEach(c => {
+            const v = c.val();
+            const btnStatus = v.status === 'diblokir' ? 
+                `<button onclick="updateStatus('${c.key}', 'aktif')" class="btn btn-sm btn-warning">Buka Blokir</button>` : 
+                `<span class="badge bg-success">Aktif</span>`;
+            h += `<tr><td>${v.nama}</td><td>${v.username}</td><td>${btnStatus}</td><td><button onclick="db.ref('siswa/${c.key}').remove()" class="btn btn-sm btn-danger">Hapus</button></td></tr>`;
+        });
+        document.getElementById('t-siswa').innerHTML = h;
+    });
+
+    function updateStatus(key, st) { db.ref('siswa/'+key).update({status: st}); }
+
+    function addManual() {
+        const n = document.getElementById('m-nama').value, u = document.getElementById('m-user').value, p = document.getElementById('m-pass').value, k = document.getElementById('m-kelas').value;
+        db.ref('siswa').push({ nama: n, username: u, sandi: p, kelas: k, status: "aktif" });
     }
 
     function saveSettings() {
@@ -154,7 +128,7 @@
             judul_app: document.getElementById('set-judul').value,
             logo_url: document.getElementById('set-logo').value,
             pesan_curang: document.getElementById('set-curang').value
-        }).then(() => Swal.fire('Berhasil','Pengaturan tersimpan','success'));
+        });
     }
 
     db.ref('pengaturan').on('value', snap => {
@@ -163,54 +137,27 @@
             document.getElementById('set-nama').value = d.nama_sekolah || "";
             document.getElementById('set-judul').value = d.judul_app || "";
             document.getElementById('set-logo').value = d.logo_url || "";
-            document.getElementById('set-curang').value = d.pesan_curang || "Anda terindikasi curang!";
+            document.getElementById('set-curang').value = d.pesan_curang || "";
         }
     });
 
-    function addManual() {
-        const n = document.getElementById('m-nama').value, k = document.getElementById('m-kelas').value, u = document.getElementById('m-user').value, p = document.getElementById('m-pass').value;
-        if(!n || !k || !u || !p) return Swal.fire('Error','Lengkapi data!','error');
-        db.ref('siswa').push({ nama: n, kelas: k, username: u, sandi: p, status: "aktif" }).then(() => { Swal.fire('Sukses','Siswa disimpan','success'); });
-    }
-
-    db.ref('siswa').on('value', snap => {
+    db.ref('hasil').on('value', snap => {
         let h = "";
         snap.forEach(c => {
             const v = c.val();
-            h += `<tr><td>${v.nama}</td><td>${v.kelas}</td><td>${v.username} / ${v.sandi}</td><td><button onclick="db.ref('siswa/${c.key}').remove()" class="btn btn-sm btn-danger">Hapus</button></td></tr>`;
+            h += `<tr><td>${v.nama}</td><td>${v.kelas}</td><td>${v.mapel}</td><td>${v.nilai}</td><td>${v.waktu}</td><td><button onclick="db.ref('hasil/${c.key}').remove()" class="btn btn-sm btn-danger">Hapus</button></td></tr>`;
         });
-        document.getElementById('t-siswa').innerHTML = h;
+        document.getElementById('list-hasil-body').innerHTML = h;
     });
 
     function uploadSoal() {
-        const f = document.getElementById('bs-file').files[0], m = document.getElementById('bs-mapel').value, t = document.getElementById('bs-tgl').value;
-        if(!f || !m) return;
+        const f = document.getElementById('bs-file').files[0], m = document.getElementById('bs-mapel').value, t = document.getElementById('bs-tgl').value, k = document.getElementById('bs-kelas').value, d = document.getElementById('bs-durasi').value;
         const reader = new FileReader();
         reader.onload = e => {
             const data = new Uint8Array(e.target.result), wb = XLSX.read(data, {type:'array'}), json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-            db.ref('bank_soal').push({ mapel: m, kelas: document.getElementById('bs-kelas').value, durasi: document.getElementById('bs-durasi').value, tanggal: t, showNilai: document.getElementById('bs-show-nilai').value, soal: json, status: "aktif" }).then(() => Swal.fire('Berhasil','Soal Uploaded','success'));
+            db.ref('bank_soal').push({ mapel: m, kelas: k, durasi: d, tanggal: t, soal: json, status: "aktif" });
         };
         reader.readAsArrayBuffer(f);
-    }
-
-    db.ref('bank_soal').on('value', snap => {
-        let h = "";
-        snap.forEach(c => {
-            const v = c.val();
-            h += `<tr><td>${v.mapel}</td><td>${v.kelas}</td><td>${v.tanggal}</td><td>${v.showNilai}</td><td>${v.status}</td><td><button onclick="db.ref('bank_soal/${c.key}').remove()" class="btn btn-sm btn-danger">Hapus</button></td></tr>`;
-        });
-        document.getElementById('t-soal').innerHTML = h;
-    });
-
-    function renderMonitoring() {
-        db.ref('hasil').once('value', snap => {
-            let h = "";
-            snap.forEach(c => {
-                const v = c.val();
-                h += `<tr><td>${v.nama}</td><td>${v.kelas}</td><td>${v.mapel}</td><td>${v.nilai}</td><td>${v.waktu}</td><td><button onclick="db.ref('hasil/${c.key}').remove().then(()=>renderMonitoring())" class="btn btn-sm btn-danger">Hapus</button></td></tr>`;
-            });
-            document.getElementById('list-hasil-body').innerHTML = h;
-        });
     }
 </script>
 </body>
