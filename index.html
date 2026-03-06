@@ -8,6 +8,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
     <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md text-center border-t-8 border-blue-900">
@@ -17,8 +18,13 @@
         
         <div class="space-y-4 text-left">
             <input type="text" id="user" class="w-full px-4 py-3 rounded-xl border-2 outline-none focus:border-blue-600" placeholder="Username">
-            <input type="password" id="pass" class="w-full px-4 py-3 rounded-xl border-2 outline-none focus:border-blue-600" placeholder="Password">
-            <button onclick="login()" class="w-full bg-blue-900 text-white font-black py-4 rounded-2xl shadow-lg">MASUK</button>
+            <div class="relative">
+                <input type="password" id="pass" class="w-full px-4 py-3 rounded-xl border-2 outline-none focus:border-blue-600" placeholder="Password">
+                <button onclick="togglePass()" class="absolute right-4 top-3.5 text-slate-400">
+                    <i id="eye-icon" class="fas fa-eye"></i>
+                </button>
+            </div>
+            <button onclick="login()" class="w-full bg-blue-900 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-blue-800 transition">MASUK</button>
         </div>
     </div>
 
@@ -26,6 +32,18 @@
     const firebaseConfig = { apiKey: "AIzaSyBGl1WySSrPU_86T0SOKi0FhpMdAw8NXLs", databaseURL: "https://cbt-v1-c3387-default-rtdb.asia-southeast1.firebasedatabase.app" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+
+    function togglePass() {
+        const p = document.getElementById('pass');
+        const i = document.getElementById('eye-icon');
+        if(p.type === "password") {
+            p.type = "text";
+            i.classList.replace('fa-eye', 'fa-eye-slash');
+        } else {
+            p.type = "password";
+            i.classList.replace('fa-eye-slash', 'fa-eye');
+        }
+    }
 
     db.ref('pengaturan').on('value', snap => {
         const d = snap.val();
@@ -38,11 +56,27 @@
 
     function login() {
         const u = document.getElementById('user').value, p = document.getElementById('pass').value;
+        if(!u || !p) return Swal.fire('Oops','Isi username & password','warning');
+
         db.ref('siswa').once('value', snap => {
             let found = null;
-            snap.forEach(c => { const d = c.val(); if(d.username == u && d.sandi == p) found = d; });
-            if(found) { sessionStorage.setItem('siswa_aktif', JSON.stringify(found)); window.location.href="ujian.html"; }
-            else { Swal.fire('Error','User/Pass Salah','error'); }
+            let keySiswa = null;
+            snap.forEach(c => { 
+                const d = c.val(); 
+                if(d.username == u && d.sandi == p) { found = d; keySiswa = c.key; } 
+            });
+
+            if(found) {
+                if(found.status === "blokir") {
+                    Swal.fire('Akses Ditolak','Akun Anda telah diblokir!','error');
+                } else {
+                    found.key = keySiswa;
+                    sessionStorage.setItem('siswa_aktif', JSON.stringify(found)); 
+                    window.location.href="ujian.html"; 
+                }
+            } else { 
+                Swal.fire('Error','User/Pass Salah','error'); 
+            }
         });
     }
 </script>
