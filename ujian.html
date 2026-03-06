@@ -3,254 +3,168 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CBT PRO - Ujian Berlangsung</title>
+    <title>CBT PRO - Ujian</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <style>
-        body { font-family: 'Inter', sans-serif; -webkit-user-select: none; user-select: none; }
-        .option-card { border: 2px solid #f1f5f9; cursor: pointer; transition: 0.2s; }
-        .option-card:hover { border-color: #3b82f6; }
-        input:checked + .option-content { color: #1e40af; font-weight: 700; }
-        .animate-fade { animation: fadeIn 0.3s ease-in; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    </style>
 </head>
-<body class="bg-slate-50 min-h-screen relative">
+<body class="bg-slate-50 min-h-screen">
 
-    <div id="box-curang" class="hidden fixed inset-0 bg-red-600 z-[9999] flex flex-col items-center justify-center text-white p-6 text-center">
-        <svg class="w-24 h-24 mb-6 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-        <h1 class="text-4xl font-black mb-4 uppercase">Terdeteksi Keluar!</h1>
-        <p id="teks-curang" class="text-xl font-bold mb-8 max-w-md">Anda terindikasi curang karena meninggalkan halaman ujian.</p>
-        <button onclick="keluarSistem()" class="bg-white text-red-600 font-bold py-4 px-10 rounded-2xl shadow-2xl">Kembali ke Login</button>
-    </div>
-
-    <div id="modal-kumpul" class="hidden fixed inset-0 bg-black/60 z-[9000] flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl scale-in-center">
-            <div class="w-20 h-20 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-5">
-                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
-            </div>
-            <h3 class="text-2xl font-black text-slate-800 mb-2">Kumpulkan?</h3>
-            <p class="text-slate-500 mb-8 font-medium">Pastikan semua jawaban sudah terisi. Klik kirim untuk mengakhiri ujian.</p>
-            <div class="flex gap-3">
-                <button onclick="batalKumpul()" class="w-full bg-slate-100 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-200 transition">Batal</button>
-                <button onclick="processScore()" class="w-full bg-green-500 text-white font-black py-3 rounded-xl shadow-lg hover:bg-green-600 transition">Ya, Kirim!</button>
-            </div>
-        </div>
+    <div id="box-curang" class="hidden fixed inset-0 bg-red-700 z-[9999] flex flex-col items-center justify-center text-white p-6 text-center">
+        <h1 class="text-6xl font-black mb-4">DIBLOKIR!</h1>
+        <p id="teks-curang" class="text-xl mb-8"></p>
+        <p class="bg-white/20 p-4 rounded-lg mb-8">Akun Anda telah dinonaktifkan secara otomatis. Silakan hubungi pengawas.</p>
+        <button onclick="keluarSistem()" class="bg-white text-red-700 font-bold py-3 px-10 rounded-xl">Keluar</button>
     </div>
 
     <div id="wrapper-ujian">
         <header class="bg-blue-900 text-white p-4 shadow-lg flex justify-between items-center sticky top-0 z-40">
-            <div class="flex items-center gap-3">
-                <div class="bg-yellow-400 text-blue-900 font-black px-2 py-1 rounded text-xs">CBT</div>
-                <div class="leading-tight">
-                    <h2 id="n-siswa" class="font-bold text-sm truncate max-w-[150px]">Memuat...</h2>
-                    <span id="h-mapel" class="text-[10px] text-yellow-300 font-bold block">Mata Pelajaran</span>
-                </div>
-            </div>
-            <div id="timer" class="bg-red-600 px-4 py-1 rounded-xl font-mono font-bold text-lg shadow-inner">00:00</div>
+            <div><h2 id="n-siswa" class="font-bold text-sm">...</h2><span id="h-mapel" class="text-[10px] text-yellow-300"></span></div>
+            <div id="timer" class="bg-red-600 px-3 py-1 rounded-lg font-mono font-bold">00:00</div>
         </header>
 
         <main class="container mx-auto p-4 max-w-4xl">
-            <div id="box-start" class="bg-white p-10 rounded-3xl shadow-xl text-center mt-6 border border-slate-100">
-                <h3 class="text-slate-400 font-bold uppercase tracking-widest text-xs mb-2">Konfirmasi Tes</h3>
-                <h1 id="t-mapel" class="text-3xl font-black text-blue-900 mb-8">-</h1>
-                <button onclick="startNow()" class="bg-blue-700 text-white w-full py-5 rounded-2xl font-black text-lg shadow-xl hover:bg-blue-800 transition-all active:scale-95">MULAI KERJAKAN</button>
+            <div id="box-start" class="bg-white p-8 rounded-3xl shadow-xl text-center mt-4">
+                <h3 id="t-mapel" class="text-2xl font-black text-blue-900 mb-6">-</h3>
+                <button id="btn-start-action" onclick="startNow()" class="bg-blue-700 text-white w-full py-4 rounded-2xl font-black">MULAI UJIAN</button>
             </div>
 
-            <div id="box-soal" class="hidden mt-6 animate-fade">
-                <div class="bg-white rounded-2xl shadow-lg overflow-hidden border border-slate-200">
-                    <div class="bg-slate-800 p-4 text-white flex justify-between items-center">
-                        <span class="font-black text-sm tracking-tighter">PERTANYAAN NO <span id="no-skrg" class="text-yellow-400 text-2xl">1</span></span>
-                        <span class="text-[10px] bg-blue-600 px-3 py-1 rounded-full font-bold uppercase">Multi Choice</span>
-                    </div>
-                    <div class="p-6 md:p-8">
-                        <div id="soal-konten" class="mb-6">
-                            <div id="display-gambar"></div>
-                            <div id="soal-teks" class="text-lg text-slate-800 leading-relaxed font-medium"></div>
-                        </div>
-                        <div id="opsi-list" class="space-y-4"></div>
-                    </div>
+            <div id="box-soal" class="hidden mt-4">
+                <div class="bg-white rounded-2xl shadow-lg p-6 border">
+                    <div id="display-gambar"></div>
+                    <div id="soal-teks" class="text-lg mb-6"></div>
+                    <div id="opsi-list" class="space-y-3"></div>
                 </div>
-
-                <div class="mt-8 flex gap-4">
-                    <button id="btn-prev" onclick="nav(-1)" class="w-1/2 bg-white border-2 border-slate-200 py-4 rounded-2xl font-bold text-slate-600 hover:bg-slate-50 transition">KEMBALI</button>
-                    <button id="btn-next" onclick="nav(1)" class="w-1/2 bg-blue-700 text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-blue-800 transition">LANJUT</button>
-                    <button id="btn-finish" onclick="finish()" class="hidden w-1/2 bg-green-500 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-green-600 transition">SELESAI</button>
+                <div class="mt-6 flex gap-3">
+                    <button id="btn-prev" onclick="nav(-1)" class="w-1/2 bg-white border py-3 rounded-xl font-bold">KEMBALI</button>
+                    <button id="btn-next" onclick="nav(1)" class="w-1/2 bg-blue-700 text-white py-3 rounded-xl font-bold">LANJUT</button>
+                    <button id="btn-finish" onclick="finish()" class="hidden w-1/2 bg-green-500 text-white py-3 rounded-xl font-black">SELESAI</button>
                 </div>
             </div>
         </main>
     </div>
 
     <div id="box-selesai" class="hidden min-h-screen items-center justify-center p-4 bg-slate-50 flex-col">
-        <div class="bg-white p-12 rounded-[40px] shadow-2xl text-center max-w-md w-full border-t-[12px] border-green-500">
-            <div class="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
-            </div>
-            <h2 class="text-3xl font-black text-slate-800 mb-2">Ujian Selesai!</h2>
-            <p class="text-slate-400 mb-10 font-medium">Jawaban Anda telah aman tersimpan di server kami.</p>
-            
-            <div id="display-nilai-box" class="hidden">
-                <div class="text-slate-500 font-bold text-xs uppercase mb-1">Skor Perolehan</div>
-                <div id="teks-nilai" class="text-5xl font-black text-blue-600 mb-10">0</div>
-            </div>
-
-            <button onclick="keluarSistem()" class="bg-slate-800 text-white font-black py-5 px-10 rounded-2xl w-full shadow-lg hover:bg-black transition">KEMBALI KE BERANDA</button>
+        <div class="bg-white p-10 rounded-3xl shadow-2xl text-center max-w-md w-full">
+            <h2 class="text-3xl font-black mb-4">Selesai!</h2>
+            <div id="box-nilai-final" class="hidden text-5xl font-black text-blue-600 mb-8">0</div>
+            <button onclick="keluarSistem()" class="bg-slate-800 text-white font-black py-4 px-10 rounded-2xl w-full">Kembali</button>
         </div>
     </div>
 
 <script>
-    // 1. CONFIG FIREBASE
-    const firebaseConfig = { 
-        apiKey: "AIzaSyBGl1WySSrPU_86T0SOKi0FhpMdAw8NXLs", 
-        databaseURL: "https://cbt-v1-c3387-default-rtdb.asia-southeast1.firebasedatabase.app" 
-    };
+    const firebaseConfig = { apiKey: "AIzaSyBGl1WySSrPU_86T0SOKi0FhpMdAw8NXLs", databaseURL: "https://cbt-v1-c3387-default-rtdb.asia-southeast1.firebasedatabase.app" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // 2. CEK SESI SISWA
-    const siswa = JSON.parse(sessionStorage.getItem('siswa_aktif'));
-    if(!siswa) window.location.href="index.html";
-    document.getElementById('n-siswa').innerText = siswa.nama;
+    const sData = JSON.parse(sessionStorage.getItem('siswa_aktif'));
+    if(!sData) window.location.href="index.html";
 
     let soalData = [], index = 0, paket = null, jawabanUser = {}, isExamActive = false;
 
-    // 3. AMBIL PESAN CURANG DARI ADMIN
-    db.ref('pengaturan').on('value', snap => {
-        const d = snap.val();
-        if(d && d.pesan_curang) document.getElementById('teks-curang').innerText = d.pesan_curang;
-    });
-
-    // 4. SISTEM ANTI CURANG
-    function periksaKecurangan() {
-        if (isExamActive) {
-            isExamActive = false;
-            document.getElementById('wrapper-ujian').classList.add('hidden');
-            document.getElementById('box-curang').classList.remove('hidden');
-        }
-    }
-    window.addEventListener("blur", periksaKecurangan);
-    document.addEventListener("visibilitychange", () => { if(document.hidden) periksaKecurangan(); });
-
-    // 5. CARI PAKET SOAL YG AKTIF
-    db.ref('bank_soal').on('value', snap => {
-        const tglSkrg = new Date().toLocaleDateString('en-CA');
+    // CEK STATUS REALTIME (JIKA DIBLOKIR ADMIN SAAT UJIAN)
+    db.ref('siswa').orderByChild('username').equalTo(sData.username).on('value', snap => {
         snap.forEach(c => {
-            const d = c.val();
-            if(String(d.kelas).toLowerCase() == String(siswa.kelas).toLowerCase() && d.tanggal == tglSkrg && d.status == "aktif") {
-                paket = d;
-                document.getElementById('t-mapel').innerText = d.mapel;
-                document.getElementById('h-mapel').innerText = d.mapel;
+            if(c.val().status === 'diblokir') {
+                isExamActive = false;
+                document.getElementById('wrapper-ujian').classList.add('hidden');
+                document.getElementById('box-curang').classList.remove('hidden');
             }
         });
     });
 
-    // 6. MULAI UJIAN
+    // FUNGSI BLOKIR OTOMATIS
+    function aksiBlokir() {
+        if (isExamActive) {
+            isExamActive = false;
+            db.ref('siswa').orderByChild('username').equalTo(sData.username).once('value', snap => {
+                snap.forEach(c => { db.ref('siswa/'+c.key).update({ status: 'diblokir' }); });
+            });
+        }
+    }
+    window.addEventListener("blur", aksiBlokir);
+    document.addEventListener("visibilitychange", () => { if(document.hidden) aksiBlokir(); });
+
+    // CARI PAKET & CEK APAKAH SUDAH PERNAH KERJA
+    db.ref('bank_soal').on('value', snap => {
+        const tgl = new Date().toLocaleDateString('en-CA');
+        snap.forEach(c => {
+            const d = c.val();
+            if(d.kelas == sData.kelas && d.tanggal == tgl && d.status == 'aktif') {
+                paket = d;
+                document.getElementById('t-mapel').innerText = d.mapel;
+                document.getElementById('h-mapel').innerText = d.mapel;
+                cekSudahUjian(d.mapel);
+            }
+        });
+    });
+
+    function cekSudahUjian(mapel) {
+        db.ref('hasil').once('value', snap => {
+            snap.forEach(c => {
+                const v = c.val();
+                if(v.nama == sData.nama && v.mapel == mapel) {
+                    document.getElementById('btn-start-action').disabled = true;
+                    document.getElementById('btn-start-action').innerText = "ANDA SUDAH SELESAI UJIAN";
+                    document.getElementById('btn-start-action').classList.replace('bg-blue-700', 'bg-slate-400');
+                }
+            });
+        });
+    }
+
     function startNow() {
-        if(!paket) return Swal.fire('Opps','Belum ada jadwal ujian untuk kelas Anda hari ini.','info');
         isExamActive = true;
         document.getElementById('box-start').classList.add('hidden');
         document.getElementById('box-soal').classList.remove('hidden');
         soalData = paket.soal;
         renderSoal();
-        startTimer(paket.durasi || 60);
+        startTimer(paket.durasi);
     }
 
-    // 7. TAMPILKAN SOAL (DENGAN DUKUNGAN GAMBAR)
     function renderSoal() {
         const s = soalData[index];
-        document.getElementById('no-skrg').innerText = index + 1;
-        
-        // Cek Kolom Gambar (Mendukung kolom 'gambar' atau 'GAMBAR')
-        const linkGambar = s.gambar || s.GAMBAR;
-        const boxGambar = document.getElementById('display-gambar');
-        if(linkGambar && linkGambar.trim() !== "") {
-            boxGambar.innerHTML = `<img src="${linkGambar}" class="w-full max-h-72 object-contain rounded-2xl mb-6 border-4 border-slate-50 bg-white shadow-sm">`;
-        } else {
-            boxGambar.innerHTML = "";
-        }
-
         document.getElementById('soal-teks').innerText = s.pertanyaan || s.PERTANYAAN;
+        const img = s.gambar || s.GAMBAR;
+        document.getElementById('display-gambar').innerHTML = img ? `<img src="${img}" class="w-full max-h-64 object-contain mb-4">` : "";
         
         let h = "";
         ['a','b','c','d','e'].forEach(o => {
             const txt = s['opsi_'+o] || s['OPSI_'+o.toUpperCase()];
             if(txt) {
-                const checked = (jawabanUser[index] == o) ? 'checked' : '';
-                h += `<label class="option-card flex items-center p-5 rounded-2xl bg-white border-2 shadow-sm animate-fade">
-                    <input type="radio" name="ans" value="${o}" ${checked} onchange="saveAnswer('${o}')" class="w-6 h-6 accent-blue-700">
-                    <span class="ml-4 text-slate-700 option-content text-base"><b>${o.toUpperCase()}.</b> ${txt}</span>
-                </label>`;
+                const chk = (jawabanUser[index] == o) ? 'checked' : '';
+                h += `<label class="flex items-center p-4 border rounded-xl"><input type="radio" name="ans" value="${o}" ${chk} onchange="jawabanUser[${index}]='${o}'" class="w-5 h-5"><span class="ml-3"><b>${o.toUpperCase()}.</b> ${txt}</span></label>`;
             }
         });
         document.getElementById('opsi-list').innerHTML = h;
-
-        // Atur Tombol Navigasi
-        document.getElementById('btn-prev').style.visibility = (index == 0) ? 'hidden' : 'visible';
-        if(index == soalData.length - 1) {
-            document.getElementById('btn-next').classList.add('hidden');
-            document.getElementById('btn-finish').classList.remove('hidden');
-        } else {
-            document.getElementById('btn-next').classList.remove('hidden');
-            document.getElementById('btn-finish').classList.add('hidden');
-        }
+        document.getElementById('btn-next').classList.toggle('hidden', index == soalData.length-1);
+        document.getElementById('btn-finish').classList.toggle('hidden', index != soalData.length-1);
     }
 
-    function saveAnswer(o) { jawabanUser[index] = o; }
-    function nav(d) { index += d; renderSoal(); window.scrollTo(0,0); }
+    function nav(d) { index += d; renderSoal(); }
+    function finish() { Swal.fire({title:'Kumpulkan?', showCancelButton:true}).then(r => { if(r.isConfirmed) processScore(); }); }
 
-    // 8. MODAL SELESAI
-    function finish() { document.getElementById('modal-kumpul').classList.remove('hidden'); }
-    function batalKumpul() { document.getElementById('modal-kumpul').classList.add('hidden'); }
-
-    // 9. PROSES HITUNG SKOR
     function processScore() {
         isExamActive = false;
-        document.getElementById('modal-kumpul').classList.add('hidden');
-        
-        Swal.fire({ title: 'Menyimpan...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
-
         let benar = 0;
-        soalData.forEach((s, i) => {
-            const kunciSistem = String(s.kunci || s.KUNCI || "").toLowerCase().trim();
-            if(jawabanUser[i] == kunciSistem) benar++;
-        });
-
+        soalData.forEach((s, i) => { if(jawabanUser[i] == (s.kunci||s.KUNCI).toLowerCase()) benar++; });
         const nilai = Math.round((benar/soalData.length)*100);
-        
-        db.ref('hasil').push({
-            nama: siswa.nama,
-            kelas: siswa.kelas,
-            mapel: paket.mapel,
-            nilai: nilai,
-            waktu: new Date().toLocaleString()
-        }).then(() => {
-            Swal.close();
+        db.ref('hasil').push({ nama: sData.nama, kelas: sData.kelas, mapel: paket.mapel, nilai: nilai, waktu: new Date().toLocaleString() })
+        .then(() => {
             document.getElementById('wrapper-ujian').classList.add('hidden');
-            
-            // Cek apakah Admin mengizinkan siswa melihat nilai
-            if(paket.showNilai == "ya" || paket.showNilai == "YA") {
-                document.getElementById('display-nilai-box').classList.remove('hidden');
-                document.getElementById('teks-nilai').innerText = nilai;
-            }
-
-            document.getElementById('box-selesai').classList.remove('hidden');
+            if(paket.showNilai == 'ya') { document.getElementById('box-nilai-final').innerText = nilai; document.getElementById('box-nilai-final').classList.remove('hidden'); }
             document.getElementById('box-selesai').classList.add('flex');
-            window.scrollTo(0,0);
         });
     }
 
-    // 10. TIMER
-    function startTimer(min) {
-        let sec = min * 60;
-        const x = setInterval(() => {
-            let m = Math.floor(sec/60), s = sec%60;
-            document.getElementById('timer').innerText = `${m}:${s<10?'0'+s:s}`;
-            if(sec-- <= 0) { clearInterval(x); processScore(); }
+    function startTimer(m) {
+        let s = m * 60;
+        setInterval(() => {
+            let min = Math.floor(s/60), sec = s%60;
+            document.getElementById('timer').innerText = `${min}:${sec<10?'0'+sec:sec}`;
+            if(s-- <= 0) processScore();
         }, 1000);
     }
-
     function keluarSistem() { sessionStorage.clear(); window.location.href="index.html"; }
 </script>
 </body>
