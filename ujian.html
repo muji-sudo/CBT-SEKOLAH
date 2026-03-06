@@ -3,25 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CBT PRO - Ujian</title>
+    <title>CBT UJIAN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
-<body class="bg-slate-50 min-h-screen select-none relative">
+<body class="bg-slate-50 min-h-screen select-none">
 
-    <div id="box-curang" class="hidden fixed inset-0 bg-red-600 z-[9999] flex-col items-center justify-center text-center p-6">
-        <h1 class="text-white text-6xl font-black mb-4">TERDETEKSI CURANG!</h1>
-        <p class="text-white text-xl" id="pesan-curang">Anda keluar dari halaman ujian. Akun Anda telah DIBLOKIR.</p>
-        <button onclick="window.location.href='index.html'" class="mt-8 bg-white text-red-600 px-10 py-4 rounded-full font-bold">KEMBALI KE LOGIN</button>
+    <div id="box-curang" class="hidden fixed inset-0 bg-red-700 z-[9999] flex flex-col items-center justify-center text-center p-6 text-white">
+        <h1 class="text-5xl font-black mb-4">CURANG TERDETEKSI!</h1>
+        <p id="pesan-curang-display" class="text-xl italic mb-6"></p>
+        <button onclick="window.location.href='index.html'" class="bg-white text-red-700 px-8 py-3 rounded-full font-bold">LOGOUT</button>
     </div>
 
-    <div id="wrapper-ujian" class="p-4">
-        <div class="max-w-4xl mx-auto bg-white shadow-lg rounded-xl p-6 mt-10">
-            <h2 id="display-mapel" class="text-2xl font-bold mb-4">Memuat Soal...</h2>
-            <div id="konten-soal" class="space-y-4"></div>
-            <button onclick="selesaiUjian()" class="mt-10 w-full bg-green-600 text-white py-4 rounded-xl font-bold">SELESAI UJIAN</button>
+    <div id="wrapper-ujian" class="p-4 max-w-3xl mx-auto mt-10">
+        <div class="bg-white p-6 rounded-2xl shadow-lg">
+            <h2 id="mapel" class="text-2xl font-bold border-b pb-4 mb-6">Memuat Ujian...</h2>
+            <div id="konten-soal" class="space-y-8"></div>
+            <button onclick="selesai()" class="w-full bg-green-600 text-white font-bold py-4 rounded-2xl mt-10">SELESAI & KIRIM</button>
         </div>
     </div>
 
@@ -33,66 +33,64 @@
         const siswa = JSON.parse(sessionStorage.getItem('siswa_aktif'));
         if(!siswa) window.location.href = "index.html";
 
-        let isExamActive = true;
-        let soalData = [];
-        let jawabanUser = {};
+        let isAktif = true, soalData = [], jawaban = {}, namaMapel = "";
 
-        // DETEKSI CURANG (Pindah Tab)
+        // PENGATURAN & ANTI CURANG
+        db.ref('pengaturan').on('value', snap => {
+            if(snap.val()) document.getElementById('pesan-curang-display').innerText = snap.val().pesan_curang;
+        });
+
         window.addEventListener('blur', () => {
-            if(isExamActive) {
-                isExamActive = false;
-                // Update status siswa jadi blokir di Firebase
+            if(isAktif) {
+                isAktif = false;
                 db.ref('siswa/' + siswa.key).update({ status: 'blokir' });
-                
                 document.getElementById('wrapper-ujian').style.display = 'none';
                 document.getElementById('box-curang').classList.remove('hidden');
-                document.getElementById('box-curang').classList.add('flex');
             }
         });
 
-        // Load Paket Soal
+        // LOAD SOAL
         db.ref('bank_soal').once('value', snap => {
             snap.forEach(c => {
-                const p = c.val();
-                if(p.status === "aktif") {
-                    document.getElementById('display-mapel').innerText = p.mapel;
-                    soalData = p.soal;
-                    renderSoal();
+                const v = c.val();
+                if(v.status === 'aktif' && v.kelas === siswa.kelas) {
+                    namaMapel = v.mapel;
+                    document.getElementById('mapel').innerText = v.mapel;
+                    soalData = v.soal;
+                    render();
                 }
             });
         });
 
-        function renderSoal() {
+        function render() {
             let h = "";
             soalData.forEach((s, i) => {
-                h += `<div class="p-4 border rounded-lg">
-                    <p class="font-bold mb-2">${i+1}. ${s.pertanyaan}</p>
-                    <div class="space-y-2">
-                        <label class="block"><input type="radio" name="soal${i}" onclick="jawabanUser[${i}]='A'"> ${s.opsi_a}</label>
-                        <label class="block"><input type="radio" name="soal${i}" onclick="jawabanUser[${i}]='B'"> ${s.opsi_b}</label>
-                        <label class="block"><input type="radio" name="soal${i}" onclick="jawabanUser[${i}]='C'"> ${s.opsi_c}</label>
-                        <label class="block"><input type="radio" name="soal${i}" onclick="jawabanUser[${i}]='D'"> ${s.opsi_d}</label>
+                h += `<div class="p-4 border-l-4 border-blue-500 bg-slate-50 rounded-r-xl">
+                    <div class="font-bold text-lg mb-4 text-slate-700">${i+1}. ${s.pertanyaan}</div>
+                    <div class="space-y-3">
+                        ${['a','b','c','d'].map(opt => `
+                            <label class="flex items-center p-3 bg-white border rounded-xl cursor-pointer hover:bg-blue-50 transition">
+                                <input type="radio" name="q${i}" onclick="jawaban[${i}]='${opt.toUpperCase()}'" class="w-5 h-5 mr-3">
+                                <span>${s['opsi_'+opt]}</span>
+                            </label>
+                        `).join('')}
                     </div>
                 </div>`;
             });
             document.getElementById('konten-soal').innerHTML = h;
         }
 
-        function selesaiUjian() {
-            isExamActive = false;
+        function selesai() {
+            isAktif = false;
             let benar = 0;
-            soalData.forEach((s, i) => {
-                if(jawabanUser[i] === s.kunci) benar++;
-            });
+            soalData.forEach((s, i) => { if(jawaban[i] === s.kunci) benar++; });
             const nilai = Math.round((benar / soalData.length) * 100);
 
             db.ref('hasil').push({
-                nama: siswa.nama, kelas: siswa.kelas,
-                mapel: document.getElementById('display-mapel').innerText,
-                nilai: nilai
+                nama: siswa.nama, kelas: siswa.kelas, mapel: namaMapel,
+                nilai: nilai, waktu: new Date().toLocaleString()
             }).then(() => {
-                Swal.fire('Berhasil', 'Ujian Selesai! Nilai Anda: ' + nilai, 'success')
-                .then(() => window.location.href = "index.html");
+                Swal.fire('Sukses','Ujian Berhasil Dikirim','success').then(() => window.location.href='index.html');
             });
         }
     </script>
