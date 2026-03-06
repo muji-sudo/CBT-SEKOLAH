@@ -12,15 +12,12 @@
 <body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
     <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md text-center border-t-8 border-blue-900">
         <img id="display-logo" src="" class="w-24 mx-auto mb-4">
-        <h2 id="display-nama" class="text-2xl font-black text-blue-900 leading-tight">CBT SYSTEM</h2>
-        <p id="display-judul" class="text-slate-500 text-sm mb-8 font-bold"></p>
+        <h2 id="display-nama" class="text-2xl font-black text-blue-900">MEMUAT...</h2>
+        <p id="display-judul" class="text-slate-500 text-sm mb-8 uppercase tracking-widest font-bold"></p>
         
         <div class="space-y-4 text-left">
-            <input type="text" id="user" class="w-full px-4 py-4 rounded-2xl border-2 outline-none focus:border-blue-600" placeholder="Username">
-            <div class="relative">
-                <input type="password" id="pass" class="w-full px-4 py-4 rounded-2xl border-2 outline-none focus:border-blue-600" placeholder="Password">
-                <button type="button" onclick="togglePass()" class="absolute right-4 top-4 text-slate-400">👁️</button>
-            </div>
+            <input type="text" id="user" class="w-full px-4 py-3 rounded-xl border-2 outline-none focus:border-blue-600" placeholder="Username">
+            <input type="password" id="pass" class="w-full px-4 py-3 rounded-xl border-2 outline-none focus:border-blue-600" placeholder="Password">
             <button onclick="login()" class="w-full bg-blue-900 text-white font-black py-4 rounded-2xl shadow-lg">MASUK</button>
         </div>
     </div>
@@ -39,30 +36,13 @@
         }
     });
 
-    function togglePass() {
-        const p = document.getElementById('pass');
-        p.type = p.type === 'password' ? 'text' : 'password';
-    }
-
     function login() {
-        const u = document.getElementById('user').value.trim(), p = document.getElementById('pass').value.trim();
+        const u = document.getElementById('user').value, p = document.getElementById('pass').value;
         db.ref('siswa').once('value', snap => {
-            let user = null;
-            snap.forEach(c => { 
-                const d = c.val(); 
-                if(String(d.username) === u && String(d.sandi) === p) user = d; 
-            });
-
-            if(user) {
-                if(user.status === 'diblokir') {
-                    Swal.fire('AKUN DIBLOKIR','Anda terdeteksi curang sebelumnya. Hubungi Admin.','error');
-                } else {
-                    sessionStorage.setItem('siswa_aktif', JSON.stringify(user));
-                    window.location.href="ujian.html";
-                }
-            } else {
-                Swal.fire('Error','Username/Password Salah','error');
-            }
+            let found = null;
+            snap.forEach(c => { const d = c.val(); if(d.username == u && d.sandi == p) found = d; });
+            if(found) { sessionStorage.setItem('siswa_aktif', JSON.stringify(found)); window.location.href="ujian.html"; }
+            else { Swal.fire('Error','User/Pass Salah','error'); }
         });
     }
 </script>
