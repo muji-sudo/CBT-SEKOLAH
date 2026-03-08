@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CBT PRO - Ujian</title>
+    <title>CBT PRO - Halaman Ujian</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -21,14 +21,14 @@
 
     <div id="box-curang" class="hidden fixed inset-0 bg-red-600 z-[9999] flex flex-col items-center justify-center text-white p-6 text-center">
         <h1 class="text-5xl font-black mb-4">PELANGGARAN!</h1>
-        <p id="teks-curang" class="text-2xl font-bold mb-8 text-white">Terdeteksi keluar dari sistem ujian.</p>
-        <button onclick="keluarSistem()" class="bg-white text-red-600 font-bold py-3 px-8 rounded-xl shadow-lg">KEMBALI</button>
+        <p id="teks-curang" class="text-2xl font-bold mb-8">Terdeteksi keluar dari sistem ujian.</p>
+        <button onclick="keluarSistem()" class="bg-white text-red-600 font-bold py-3 px-8 rounded-xl shadow-lg">KEMBALI KE LOGIN</button>
     </div>
 
     <div id="modal-kumpul" class="hidden fixed inset-0 bg-black/50 z-[9000] flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl">
-            <h3 class="text-2xl font-black mb-4">Selesai Ujian?</h3>
-            <p class="text-slate-500 mb-8">Pastikan semua jawaban sudah terisi.</p>
+            <h3 class="text-2xl font-black mb-4 text-slate-800">Selesai Ujian?</h3>
+            <p class="text-slate-500 mb-8">Pastikan semua jawaban sudah terisi dengan benar.</p>
             <div class="flex gap-3">
                 <button onclick="batalKumpul()" class="w-full bg-slate-200 py-3 rounded-xl font-bold">Batal</button>
                 <button onclick="processScore()" class="w-full bg-green-500 text-white py-3 rounded-xl font-black">Ya, Kirim!</button>
@@ -38,43 +38,55 @@
 
     <div id="wrapper-ujian">
         <header class="bg-blue-900 text-white p-4 shadow-lg flex justify-between items-center sticky top-0 z-40">
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-3">
                 <div class="bg-yellow-400 text-blue-900 font-bold px-2 py-1 rounded text-xs">CBT</div>
                 <div>
                     <h2 id="n-siswa" class="font-bold text-sm tracking-wide">...</h2>
-                    <span id="h-mapel" class="text-[10px] text-yellow-300 block uppercase font-bold"></span>
+                    <span id="h-mapel" class="text-[10px] text-yellow-300 block uppercase font-bold tracking-widest">Memuat Jadwal...</span>
                 </div>
             </div>
             <div id="timer" class="bg-red-600 px-3 py-1 rounded-lg font-mono font-bold border-2 border-white/20 text-lg">00:00</div>
         </header>
 
         <main class="container mx-auto p-4 max-w-4xl">
-            <div id="box-start" class="bg-white p-8 rounded-3xl shadow-xl text-center mt-4 border border-slate-200">
-                <h3 id="t-mapel" class="text-2xl font-black text-blue-900 mb-2 uppercase tracking-tight">MEMUAT...</h3>
-                <div id="info-status" class="mb-6 italic text-slate-500 text-sm">Mengecek jadwal ujian...</div>
-                <div id="btn-start-container" class="hidden flex flex-col gap-3">
-                    <button onclick="startNow()" class="bg-blue-700 text-white w-full py-4 rounded-2xl font-black shadow-lg hover:bg-blue-800 transition-all">MULAI UJIAN SEKARANG</button>
+            <div id="box-start" class="bg-white p-10 rounded-3xl shadow-xl text-center mt-6 border border-slate-200">
+                <div class="w-20 h-20 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                    </svg>
                 </div>
-                <button onclick="keluarSistem()" class="mt-4 text-slate-400 font-bold text-sm hover:text-red-600 transition-all uppercase tracking-widest underline">Keluar / Ganti Akun</button>
+                <h3 id="t-mapel" class="text-2xl font-black text-blue-900 mb-2 uppercase">MENGECEK JADWAL...</h3>
+                <div id="info-status" class="mb-8 text-slate-500">Mohon tunggu sebentar...</div>
+                
+                <div id="btn-start-container" class="hidden flex flex-col gap-3">
+                    <button onclick="startNow()" class="bg-blue-700 text-white w-full py-4 rounded-2xl font-black shadow-lg hover:bg-blue-800 transition-all text-lg">MULAI KERJAKAN</button>
+                </div>
+                
+                <button onclick="keluarSistem()" class="mt-6 text-slate-400 font-bold text-xs hover:text-red-600 transition-all uppercase tracking-widest flex items-center justify-center gap-2 mx-auto">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    Keluar / Ganti Akun
+                </button>
             </div>
 
             <div id="box-soal" class="hidden mt-4">
                 <div class="bg-white rounded-2xl shadow-lg p-6 border border-slate-200">
-                    <div class="mb-4 flex justify-between items-center">
+                    <div class="mb-6 flex justify-between items-center border-b pb-4 border-slate-100">
                         <div class="font-bold text-slate-400 uppercase text-xs tracking-widest">
-                            SOAL NOMOR <span id="no-skrg" class="text-blue-600 text-xl font-black ml-1">1</span>
-                            <span id="label-tipe" class="badge-tipe ml-2">PILIHAN GANDA</span>
+                            SOAL NOMOR <span id="no-skrg" class="text-blue-600 text-2xl font-black ml-1">1</span>
+                            <span id="label-tipe" class="badge-tipe ml-3">PILIHAN GANDA</span>
                         </div>
                     </div>
                     <div id="container-gambar"></div>
-                    <div id="soal-teks" class="text-lg text-slate-800 mb-8 leading-relaxed font-medium"></div>
-                    <div id="opsi-list" class="space-y-3"></div>
+                    <div id="soal-teks" class="text-xl text-slate-800 mb-8 leading-relaxed font-semibold"></div>
+                    <div id="opsi-list" class="space-y-4"></div>
                 </div>
                 
-                <div class="mt-8 flex gap-3">
-                    <button id="btn-prev" onclick="nav(-1)" class="w-1/2 bg-white border-2 border-slate-200 py-4 rounded-2xl font-black text-slate-600">KEMBALI</button>
-                    <button id="btn-next" onclick="nav(1)" class="w-1/2 bg-blue-700 text-white py-4 rounded-2xl font-black shadow-lg">LANJUTKAN</button>
-                    <button id="btn-finish" onclick="finish()" class="hidden w-1/2 bg-green-500 text-white py-4 rounded-2xl font-black shadow-lg">SELESAI</button>
+                <div class="mt-8 flex gap-4">
+                    <button id="btn-prev" onclick="nav(-1)" class="w-1/2 bg-white border-2 border-slate-200 py-4 rounded-2xl font-black text-slate-600 hover:bg-slate-50">KEMBALI</button>
+                    <button id="btn-next" onclick="nav(1)" class="w-1/2 bg-blue-700 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-blue-800">LANJUTKAN</button>
+                    <button id="btn-finish" onclick="finish()" class="hidden w-1/2 bg-green-500 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-green-600">SELESAI UJIAN</button>
                 </div>
             </div>
         </main>
@@ -82,29 +94,38 @@
 
     <div id="box-selesai" class="hidden min-h-screen items-center justify-center p-4 bg-slate-50 text-center">
         <div class="bg-white p-10 rounded-3xl shadow-2xl max-w-md w-full border-t-8 border-green-500">
-            <h2 class="text-3xl font-black text-slate-800 mb-2">Alhamdulillah Sudah Kelar</h2>
-            <p class="text-slate-500 mb-8">Jawaban Anda telah tersimpan dengan aman.</p>
+            <div class="w-20 h-20 bg-green-50 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+            </div>
+            <h2 class="text-3xl font-black text-slate-800 mb-2">Terima Kasih!</h2>
+            <p class="text-slate-500 mb-8">Jawaban Anda berhasil dikirim ke server.</p>
             <div id="teks-nilai" class="text-2xl font-black text-blue-700 mb-8 bg-blue-50 py-4 rounded-2xl border-2 border-blue-100"></div>
-            <button onclick="keluarSistem()" class="bg-slate-800 text-white font-black py-4 px-10 rounded-2xl w-full shadow-lg">KELUAR</button>
+            <button onclick="keluarSistem()" class="bg-slate-800 text-white font-black py-4 px-10 rounded-2xl w-full shadow-lg">KELUAR APLIKASI</button>
         </div>
     </div>
 
 <script>
+    // Konfigurasi Firebase Anda
     const firebaseConfig = { apiKey: "AIzaSyBGl1WySSrPU_86T0SOKi0FhpMdAw8NXLs", databaseURL: "https://cbt-v1-c3387-default-rtdb.asia-southeast1.firebasedatabase.app" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    // Data Siswa Aktif
     const siswa = JSON.parse(sessionStorage.getItem('siswa_aktif'));
     if(!siswa) window.location.href="index.html";
     document.getElementById('n-siswa').innerText = siswa.nama;
 
     let soalData = [], index = 0, paket = null, jawabanUser = {}, isExamActive = false;
 
+    // Load Pesan Pelanggaran
     db.ref('pengaturan').on('value', snap => {
         const d = snap.val();
         if(d && d.pesan_curang) document.getElementById('teks-curang').innerText = d.pesan_curang;
     });
 
+    // Cek Status Siswa (Blokir/Curang)
     db.ref('siswa/' + siswa.key).on('value', snap => {
         const d = snap.val();
         if(d && (d.status === "curang" || d.status === "blokir")) {
@@ -114,6 +135,7 @@
         }
     });
 
+    // Anti Keluar Tab
     function periksaKecurangan() {
         if (isExamActive) {
             isExamActive = false;
@@ -123,37 +145,7 @@
     window.addEventListener("blur", periksaKecurangan);
     document.addEventListener("visibilitychange", () => { if(document.hidden) periksaKecurangan(); });
 
-    // FIX LOGIKA CEK RIWAYAT
-    db.ref('bank_soal').on('value', async snap => {
-        const tglSkrg = new Date().toLocaleDateString('en-CA');
-        let ditemukan = false;
-        
-        const hasilSnap = await db.ref('hasil').orderByChild('nama').equalTo(siswa.nama).once('value');
-        let mapelSudah = [];
-        hasilSnap.forEach(h => mapelSudah.push(h.val().mapel));
-
-        snap.forEach(c => {
-            const d = c.val();
-            if(d.kelas == siswa.kelas && d.tanggal == tglSkrg && d.status == "aktif") {
-                paket = d; ditemukan = true;
-                document.getElementById('t-mapel').innerText = d.mapel;
-                document.getElementById('h-mapel').innerText = d.mapel;
-                
-                if(mapelSudah.includes(d.mapel)) {
-                    document.getElementById('info-status').innerHTML = `<div class="bg-green-100 text-green-700 p-4 rounded-2xl font-bold">Anda sudah menyelesaikan ujian ini.</div>`;
-                    document.getElementById('btn-start-container').classList.add('hidden');
-                } else {
-                    document.getElementById('info-status').innerHTML = `<p class="text-slate-500 text-sm">Klik tombol di bawah untuk memulai.</p>`;
-                    document.getElementById('btn-start-container').classList.remove('hidden');
-                }
-            }
-        });
-        if(!ditemukan) {
-            document.getElementById('t-mapel').innerText = "TIDAK ADA JADWAL";
-            document.getElementById('info-status').innerText = "Belum ada jadwal ujian hari ini.";
-        }
-    });
-
+    // ACARKAN SOAL
     function shuffle(array) {
         for (let i = array.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
@@ -162,13 +154,51 @@
         return array;
     }
 
+    // CEK JADWAL & RIWAYAT (FIXED)
+    db.ref('bank_soal').on('value', async snap => {
+        const tglSkrg = new Date().toLocaleDateString('en-CA');
+        let ditemukan = false;
+        
+        // Cek apakah sudah pernah mengerjakan mapel ini
+        const hasilSnap = await db.ref('hasil').orderByChild('nama').equalTo(siswa.nama).once('value');
+        let mapelSelesai = [];
+        hasilSnap.forEach(h => { mapelSelesai.push(h.val().mapel); });
+
+        snap.forEach(c => {
+            const d = c.val();
+            // Cek Kelas, Tanggal, dan Status Aktif
+            if(d.kelas == siswa.kelas && d.tanggal == tglSkrg && d.status == "aktif") {
+                paket = d; ditemukan = true;
+                document.getElementById('t-mapel').innerText = d.mapel;
+                document.getElementById('h-mapel').innerText = d.mapel;
+                
+                if(mapelSelesai.includes(d.mapel)) {
+                    document.getElementById('info-status').innerHTML = `<div class="bg-green-100 text-green-700 p-4 rounded-2xl font-bold border border-green-200">Anda sudah menyelesaikan ujian ini hari ini.</div>`;
+                    document.getElementById('btn-start-container').classList.add('hidden');
+                } else {
+                    document.getElementById('info-status').innerHTML = `<p class="text-slate-500">Durasi: <b>${d.durasi} Menit</b></p>`;
+                    document.getElementById('btn-start-container').classList.remove('hidden');
+                }
+            }
+        });
+
+        if(!ditemukan) {
+            document.getElementById('t-mapel').innerText = "TIDAK ADA JADWAL";
+            document.getElementById('info-status').innerText = "Belum ada jadwal ujian aktif untuk kelas Anda.";
+        }
+    });
+
     async function startNow() {
         if(!paket) return;
+        // Cek progres jika ada
         const snap = await db.ref('progres_jawaban/' + paket.mapel + '/' + siswa.key).once('value');
         if(snap.exists()) jawabanUser = snap.val();
+
         isExamActive = true;
         document.getElementById('box-start').classList.add('hidden');
         document.getElementById('box-soal').classList.remove('hidden');
+        
+        // Acak Soal Saat Mulai
         soalData = shuffle([...paket.soal]);
         renderSoal();
         startTimer(paket.durasi);
@@ -177,9 +207,11 @@
     function renderSoal() {
         const s = soalData[index];
         const tipe = (s.tipe || "pilihan_ganda").toLowerCase();
+        
         document.getElementById('no-skrg').innerText = index + 1;
         document.getElementById('soal-teks').innerText = s.pertanyaan;
         
+        // Label Tipe Soal
         let labelTxt = "Pilihan Ganda";
         if(tipe === "kompleks") labelTxt = "Pilihan Ganda Kompleks";
         if(tipe === "benar_salah") labelTxt = "Benar / Salah";
@@ -189,16 +221,24 @@
         imgCont.innerHTML = (s.gambar) ? `<img src="${s.gambar}" class="soal-gambar">` : "";
 
         let h = "";
-        let limit = (tipe === "benar_salah") ? ['a','b'] : ['a','b','c','d'];
-        limit.forEach(o => {
+        let opsiKeys = (tipe === "benar_salah") ? ['a','b'] : ['a','b','c','d'];
+        
+        opsiKeys.forEach(o => {
             const txt = s['opsi_'+o];
             if(!txt && tipe !== "benar_salah") return;
-            const isChecked = (tipe === 'kompleks') ? (jawabanUser[s.pertanyaan] && jawabanUser[s.pertanyaan].includes(o)) : (jawabanUser[s.pertanyaan] == o);
-            h += `<label class="option-card flex items-center p-5 bg-white border-2 shadow-sm mb-3">
-                <input type="${tipe==='kompleks'?'checkbox':'radio'}" name="ans" value="${o}" ${isChecked?'checked':''} onchange="saveAnswer('${o}','${tipe}','${s.pertanyaan}')" class="accent-blue-700">
+            
+            // Cek apakah jawaban sudah terpilih (untuk sinkronisasi progres)
+            const isChecked = (tipe === 'kompleks') ? 
+                (jawabanUser[s.pertanyaan] && jawabanUser[s.pertanyaan].includes(o)) : 
+                (jawabanUser[s.pertanyaan] == o);
+
+            h += `<label class="option-card flex items-center p-5 bg-white border-2 shadow-sm transition-all">
+                <input type="${tipe==='kompleks'?'checkbox':'radio'}" name="ans" value="${o}" ${isChecked?'checked':''} 
+                       onchange="saveAnswer('${o}','${tipe}','${s.pertanyaan}')" class="accent-blue-700">
                 <div class="ml-4 text-slate-700 text-lg flex-1">${txt}</div>
             </label>`;
         });
+
         document.getElementById('opsi-list').innerHTML = h;
         document.getElementById('btn-prev').classList.toggle('hidden', index == 0);
         document.getElementById('btn-next').classList.toggle('hidden', index == soalData.length-1);
@@ -210,7 +250,10 @@
             let cur = (jawabanUser[q] || "").split(',').filter(x => x);
             if(cur.includes(o)) cur = cur.filter(x => x !== o); else cur.push(o);
             jawabanUser[q] = cur.sort().join(',');
-        } else { jawabanUser[q] = o; }
+        } else { 
+            jawabanUser[q] = o; 
+        }
+        // Simpan progres ke cloud agar jika logout/reload jawaban tidak hilang
         db.ref('progres_jawaban/' + paket.mapel + '/' + siswa.key).set(jawabanUser);
     }
 
@@ -221,16 +264,28 @@
     function processScore() {
         isExamActive = false;
         document.getElementById('modal-kumpul').classList.add('hidden');
+        
         let benar = 0;
         soalData.forEach((s) => {
-            if((jawabanUser[s.pertanyaan]||"").toLowerCase().replace(/\s/g,'') === (s.kunci||"").toLowerCase().replace(/\s/g,'')) benar++;
+            const userAns = (jawabanUser[s.pertanyaan] || "").toLowerCase().replace(/\s/g,'');
+            const keyAns = (s.kunci || "").toLowerCase().replace(/\s/g,'');
+            if(userAns === keyAns) benar++;
         });
-        const nilai = Math.round((benar/soalData.length)*100);
-        db.ref('hasil').push({ nama: siswa.nama, kelas: siswa.kelas, mapel: paket.mapel, nilai: nilai, waktu: new Date().toLocaleString() })
-        .then(() => {
+
+        const nilai = Math.round((benar / soalData.length) * 100);
+        
+        // Simpan Hasil
+        db.ref('hasil').push({
+            nama: siswa.nama,
+            kelas: siswa.kelas,
+            mapel: paket.mapel,
+            nilai: nilai,
+            waktu: new Date().toLocaleString()
+        }).then(() => {
+            // Hapus progres karena sudah selesai
             db.ref('progres_jawaban/' + paket.mapel + '/' + siswa.key).remove();
             document.getElementById('wrapper-ujian').classList.add('hidden');
-            document.getElementById('teks-nilai').innerText = (paket.showNilai == "ya") ? "Nilai Anda: " + nilai : "Hasil Terkirim";
+            document.getElementById('teks-nilai').innerText = (paket.showNilai == "ya") ? "Nilai Akhir: " + nilai : "Jawaban Berhasil Dikirim";
             document.getElementById('box-selesai').classList.replace('hidden', 'flex');
         });
     }
@@ -239,13 +294,19 @@
         let sec = min * 60;
         const x = setInterval(() => {
             if(!isExamActive) clearInterval(x);
-            let m = Math.floor(sec/60), s = sec%60;
-            document.getElementById('timer').innerText = `${m}:${s<10?'0'+s:s}`;
-            if(sec-- <= 0) { clearInterval(x); processScore(); }
+            let m = Math.floor(sec / 60), s = sec % 60;
+            document.getElementById('timer').innerText = `${m}:${s < 10 ? '0' + s : s}`;
+            if(sec-- <= 0) { 
+                clearInterval(x); 
+                Swal.fire('Waktu Habis!', 'Jawaban Anda akan otomatis terkirim.', 'info').then(processScore);
+            }
         }, 1000);
     }
 
-    function keluarSistem() { sessionStorage.clear(); window.location.href="index.html"; }
+    function keluarSistem() {
+        sessionStorage.clear();
+        window.location.href="index.html";
+    }
 </script>
 </body>
 </html>
