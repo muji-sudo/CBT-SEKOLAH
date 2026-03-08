@@ -9,23 +9,38 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+    </style>
 </head>
 <body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
-    <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md text-center border-t-8 border-blue-900">
-        <img id="display-logo" src="" class="w-24 mx-auto mb-4">
-        <h2 id="display-nama" class="text-2xl font-black text-blue-900">MEMUAT...</h2>
-        <p id="display-judul" class="text-slate-500 text-sm mb-8 uppercase tracking-widest font-bold"></p>
-        
-        <div class="space-y-4 text-left">
-            <input type="text" id="user" class="w-full px-4 py-3 rounded-xl border-2 outline-none focus:border-blue-600" placeholder="Username">
-            <div class="relative">
-                <input type="password" id="pass" class="w-full px-4 py-3 rounded-xl border-2 outline-none focus:border-blue-600" placeholder="Password">
-                <button onclick="togglePass()" class="absolute right-4 top-3.5 text-slate-400">
-                    <i id="eye-icon" class="fas fa-eye"></i>
-                </button>
+
+    <div class="glass-card p-8 rounded-3xl shadow-2xl w-full max-w-md text-center border-t-8 border-blue-900">
+        <img id="display-logo" src="https://via.placeholder.com/150" class="w-24 h-24 object-contain mx-auto mb-4">
+        <h2 id="display-nama" class="text-2xl font-black text-blue-900 uppercase">MEMUAT...</h2>
+        <p id="display-judul" class="text-slate-500 text-sm mb-8 font-bold"></p>
+
+        <div class="text-left space-y-4">
+            <div>
+                <label class="text-xs font-black text-slate-400 ml-1">USERNAME</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400"><i class="fas fa-user"></i></span>
+                    <input type="text" id="user" class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-600 outline-none transition-all" placeholder="Masukkan username">
+                </div>
             </div>
-            <button onclick="login()" class="w-full bg-blue-900 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-blue-800 transition">MASUK</button>
+            <div>
+                <label class="text-xs font-black text-slate-400 ml-1">PASSWORD</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400"><i class="fas fa-lock"></i></span>
+                    <input type="password" id="pass" class="w-full pl-10 pr-12 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-600 outline-none transition-all" placeholder="Masukkan password">
+                    <button onclick="togglePass()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400"><i id="eye-icon" class="fas fa-eye"></i></button>
+                </div>
+            </div>
+            <button onclick="login()" class="w-full bg-blue-900 text-white font-black py-4 rounded-xl shadow-lg hover:bg-blue-800 transition-all transform active:scale-95">MASUK KE UJIAN</button>
         </div>
+        
+        <p class="mt-8 text-[10px] text-slate-400 font-bold uppercase tracking-widest">&copy; 2024 CBT PRO SYSTEM</p>
     </div>
 
 <script>
@@ -33,49 +48,44 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    function togglePass() {
-        const p = document.getElementById('pass');
-        const i = document.getElementById('eye-icon');
-        if(p.type === "password") {
-            p.type = "text";
-            i.classList.replace('fa-eye', 'fa-eye-slash');
-        } else {
-            p.type = "password";
-            i.classList.replace('fa-eye-slash', 'fa-eye');
-        }
-    }
-
+    // TARIK PENGATURAN IDENTITAS
     db.ref('pengaturan').on('value', snap => {
         const d = snap.val();
         if(d) {
-            document.getElementById('display-nama').innerText = d.nama_sekolah;
-            document.getElementById('display-judul').innerText = d.judul_app;
-            document.getElementById('display-logo').src = d.logo_url;
+            document.getElementById('display-nama').innerText = d.nama_sekolah || "CBT SYSTEM";
+            document.getElementById('display-judul').innerText = d.nama_aplikasi || "Selamat Datang";
+            if(d.logo_url) document.getElementById('display-logo').src = d.logo_url;
         }
     });
+
+    function togglePass() {
+        const p = document.getElementById('pass'), i = document.getElementById('eye-icon');
+        if(p.type === "password") { p.type = "text"; i.classList.replace('fa-eye', 'fa-eye-slash'); }
+        else { p.type = "password"; i.classList.replace('fa-eye-slash', 'fa-eye'); }
+    }
 
     function login() {
         const u = document.getElementById('user').value, p = document.getElementById('pass').value;
         if(!u || !p) return Swal.fire('Oops','Isi username & password','warning');
 
         db.ref('siswa').once('value', snap => {
-            let found = null;
+            let userFound = null;
             let keySiswa = null;
             snap.forEach(c => { 
                 const d = c.val(); 
-                if(d.username == u && d.sandi == p) { found = d; keySiswa = c.key; } 
+                if(d.username == u && d.sandi == p) { userFound = d; keySiswa = c.key; } 
             });
 
-            if(found) {
-                if(found.status === "blokir") {
-                    Swal.fire('Akses Ditolak','Akun Anda telah diblokir!','error');
+            if(userFound) {
+                if(userFound.status === "blokir" || userFound.status === "curang") {
+                    Swal.fire('Akses Ditolak','Akun Anda diblokir karena pelanggaran atau dinonaktifkan!','error');
                 } else {
-                    found.key = keySiswa;
-                    sessionStorage.setItem('siswa_aktif', JSON.stringify(found)); 
-                    window.location.href="ujian.html"; 
+                    userFound.key = keySiswa;
+                    sessionStorage.setItem('siswa_aktif', JSON.stringify(userFound)); 
+                    window.location.href = "ujian.html";
                 }
-            } else { 
-                Swal.fire('Error','User/Pass Salah','error'); 
+            } else {
+                Swal.fire('Gagal','Username atau password salah','error');
             }
         });
     }
