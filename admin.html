@@ -88,8 +88,59 @@
         <div class="card p-0 overflow-hidden"><table class="table mb-0"><thead class="table-light"><tr><th>Nama</th><th>Kelas</th><th>Login</th><th>Aksi</th></tr></thead><tbody id="t-siswa"></tbody></table></div>
     </div>
 
-    <div id="p-bank" class="hidden">... (Kode Bank Soal Anda) ...</div>
-    <div id="p-set" class="hidden">... (Kode Pengaturan Anda) ...</div>
+    <div id="p-bank" class="hidden">
+        <h4 class="fw-bold mb-4">Bank Soal</h4>
+        <div class="card p-4">
+            <div class="row g-3">
+                <div class="col-md-4"><input type="text" id="bs-mapel" class="form-control" placeholder="Mata Pelajaran"></div>
+                <div class="col-md-2"><select id="bs-kelas" class="form-select select-kelas-smp"></select></div>
+                <div class="col-md-2"><input type="number" id="bs-durasi" class="form-control" placeholder="Durasi (Menit)"></div>
+                <div class="col-md-2"><input type="date" id="bs-tgl" class="form-control"></div>
+                <div class="col-md-2">
+                    <select id="bs-show-nilai" class="form-select">
+                        <option value="ya">Tampil Nilai</option>
+                        <option value="tidak">Sembunyi Nilai</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <label class="small fw-bold">File Soal (Excel)</label>
+                    <input type="file" id="bs-file" class="form-control" accept=".xlsx">
+                </div>
+                <div class="col-12"><button onclick="uploadSoal()" class="btn btn-primary w-100 fw-bold">UPLOAD BANK SOAL</button></div>
+            </div>
+        </div>
+        <div class="card p-0 mt-3 overflow-hidden">
+            <table class="table mb-0">
+                <thead class="table-dark"><tr><th>Mapel</th><th>Kelas</th><th>Tanggal</th><th>Status</th><th>Aksi</th></tr></thead>
+                <tbody id="t-soal"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="p-set" class="hidden">
+        <h4 class="fw-bold mb-4">Pengaturan Sistem</h4>
+        <div class="card p-4">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="fw-bold">Nama Sekolah</label>
+                    <input type="text" id="set-sekolah" class="form-control" placeholder="Contoh: SMP Negeri 1 Surabaya">
+                </div>
+                <div class="col-md-6">
+                    <label class="fw-bold">Nama Aplikasi</label>
+                    <input type="text" id="set-app" class="form-control" placeholder="Contoh: SENSEI CBT">
+                </div>
+                <div class="col-12">
+                    <label class="fw-bold">URL Logo Sekolah (PNG/JPG)</label>
+                    <input type="text" id="set-logo" class="form-control" placeholder="https://link-gambar.com/logo.png">
+                </div>
+                <div class="col-12">
+                    <label class="fw-bold">Pesan Pelanggaran (Curang)</label>
+                    <textarea id="set-pesan" class="form-control" rows="3" placeholder="Pesan yang muncul jika siswa ganti tab"></textarea>
+                </div>
+                <div class="col-12"><button onclick="simpanPengaturan()" class="btn btn-primary w-100 fw-bold">SIMPAN PERUBAHAN</button></div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -97,7 +148,6 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // DAFTAR KELAS SMP (Hardcoded agar tidak double)
     const LIST_KELAS_SMP = [
         "VII-A", "VII-B", "VII-C", "VII-D", "VII-E",
         "VIII-A", "VIII-B", "VIII-C", "VIII-D", "VIII-E",
@@ -126,11 +176,93 @@
         document.getElementById('n-'+p).classList.add('active');
     }
 
-    // FIX IMPORT SISWA
+    // --- LOGIKA PENGATURAN ---
+    db.ref('pengaturan').on('value', snap => {
+        const d = snap.val();
+        if(d) {
+            document.getElementById('set-sekolah').value = d.nama_sekolah || "";
+            document.getElementById('set-app').value = d.nama_aplikasi || "";
+            document.getElementById('set-logo').value = d.logo_url || "";
+            document.getElementById('set-pesan').value = d.pesan_curang || "";
+            document.getElementById('sidebar-sekolah').innerText = d.nama_sekolah || "Administrator";
+        }
+    });
+
+    function simpanPengaturan() {
+        db.ref('pengaturan').set({
+            nama_sekolah: document.getElementById('set-sekolah').value,
+            nama_aplikasi: document.getElementById('set-app').value,
+            logo_url: document.getElementById('set-logo').value,
+            pesan_curang: document.getElementById('set-pesan').value
+        }).then(() => Swal.fire('Tersimpan', 'Pengaturan berhasil diperbarui', 'success'));
+    }
+
+    // --- LOGIKA BANK SOAL ---
+    function uploadSoal() {
+        const m = document.getElementById('bs-mapel').value;
+        const k = document.getElementById('bs-kelas').value;
+        const d = document.getElementById('bs-durasi').value;
+        const t = document.getElementById('bs-tgl').value;
+        const sn = document.getElementById('bs-show-nilai').value;
+        const file = document.getElementById('bs-file').files[0];
+
+        if(!m || !k || !file) return Swal.fire('Error', 'Mapel, Kelas, dan File Soal wajib diisi!', 'error');
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, {type: 'array'});
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const json = XLSX.utils.sheet_to_json(sheet);
+
+            const soalFormat = json.map(x => ({
+                pertanyaan: x.pertanyaan,
+                gambar: x.url_gambar || "",
+                opsi_a: x.opsi_a,
+                opsi_b: x.opsi_b,
+                opsi_c: x.opsi_c,
+                opsi_d: x.opsi_d,
+                kunci: x.kunci,
+                tipe: x.tipe_soal || "pilihan_ganda"
+            }));
+
+            db.ref('bank_soal').push({
+                mapel: m, kelas: k, durasi: d, tanggal: t,
+                showNilai: sn, soal: soalFormat, status: "aktif"
+            }).then(() => {
+                Swal.fire('Berhasil', 'Bank Soal berhasil diupload', 'success');
+                document.getElementById('bs-file').value = "";
+            });
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    db.ref('bank_soal').on('value', snap => {
+        let h = "";
+        let mapels = new Set();
+        snap.forEach(c => {
+            const v = c.val(); v.key = c.key;
+            mapels.add(v.mapel);
+            h += `<tr>
+                <td>${v.mapel}</td><td>${v.kelas}</td><td>${v.tanggal}</td>
+                <td><span class="badge bg-success">${v.status}</span></td>
+                <td><button onclick="db.ref('bank_soal/${v.key}').remove()" class="btn btn-xs btn-danger">Hapus</button></td>
+            </tr>`;
+        });
+        document.getElementById('t-soal').innerHTML = h;
+        // Update dropdown mapel di menu lain
+        const drops = [document.getElementById('mon-f-mapel'), document.getElementById('f-mapel')];
+        drops.forEach(el => {
+            let opt = `<option value="">-- Pilih Mapel --</option>`;
+            Array.from(mapels).sort().forEach(m => opt += `<option value="${m}">${m}</option>`);
+            el.innerHTML = opt;
+        });
+    });
+
+    // --- LOGIKA SISWA ---
     function uploadSiswa() {
         const file = document.getElementById('s-file').files[0];
         if(!file) return Swal.fire('Error', 'Pilih file Excel dulu', 'error');
-
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
@@ -138,47 +270,28 @@
                 const workbook = XLSX.read(data, {type: 'array'});
                 const sheet = workbook.Sheets[workbook.SheetNames[0]];
                 const json = XLSX.utils.sheet_to_json(sheet);
-
-                if(json.length === 0) return Swal.fire('Kosong', 'Tidak ada data di Excel', 'warning');
-
                 let count = 0;
                 json.forEach(row => {
-                    // Mapping kolom (kecilkan huruf untuk antisipasi user input di excel)
-                    const nama = row.nama || row.Nama || "";
-                    const kelas = row.kelas || row.Kelas || "";
-                    const user = row.username || row.Username || row.user || "";
-                    const pass = row.sandi || row.Sandi || row.password || "";
-
-                    if(nama && kelas && user) {
-                        db.ref('siswa').push({
-                            nama: nama,
-                            kelas: kelas,
-                            username: String(user),
-                            sandi: String(pass),
-                            status: "aktif"
-                        });
+                    const n = row.nama || row.Nama;
+                    const k = row.kelas || row.Kelas;
+                    const u = row.username || row.Username || row.user;
+                    const p = row.sandi || row.Sandi || row.password;
+                    if(n && k && u) {
+                        db.ref('siswa').push({ nama: n, kelas: k, username: String(u), sandi: String(p), status: "aktif" });
                         count++;
                     }
                 });
-                Swal.fire('Sukses', count + ' Data siswa berhasil diimport', 'success');
-                document.getElementById('s-file').value = "";
-            } catch (err) {
-                Swal.fire('Gagal', 'Format Excel tidak didukung', 'error');
-            }
+                Swal.fire('Sukses', count + ' Siswa diimport', 'success');
+            } catch (err) { Swal.fire('Error', 'Gagal baca file', 'error'); }
         };
         reader.readAsArrayBuffer(file);
     }
 
     function addManualSiswa() {
-        const n = document.getElementById('m-nama').value;
-        const k = document.getElementById('m-kelas').value;
-        const u = document.getElementById('m-user').value;
-        const p = document.getElementById('m-pass').value;
-        if(!n || !k || !u) return Swal.fire('Error', 'Nama, Kelas, & User wajib diisi', 'error');
-
-        db.ref('siswa').push({ nama: n, kelas: k, username: u, sandi: p, status: "aktif" })
-        .then(() => {
-            Swal.fire('Berhasil', 'Siswa ditambahkan', 'success');
+        const n = document.getElementById('m-nama').value, k = document.getElementById('m-kelas').value, u = document.getElementById('m-user').value, p = document.getElementById('m-pass').value;
+        if(!n || !k || !u) return Swal.fire('Error', 'Lengkapi form', 'error');
+        db.ref('siswa').push({ nama: n, kelas: k, username: u, sandi: p, status: "aktif" }).then(() => {
+            Swal.fire('Ok', 'Ditambahkan', 'success');
             document.getElementById('m-nama').value = "";
         });
     }
@@ -194,20 +307,10 @@
         document.getElementById('t-siswa').innerHTML = h;
     });
 
-    db.ref('bank_soal').on('value', snap => {
-        let m = new Set();
-        snap.forEach(c => { m.add(c.val().mapel); });
-        const dropMapel = [document.getElementById('mon-f-mapel'), document.getElementById('f-mapel')];
-        dropMapel.forEach(el => {
-            let h = `<option value="">-- Pilih Mapel --</option>`;
-            Array.from(m).sort().forEach(x => { h += `<option value="${x}">${x}</option>`; });
-            el.innerHTML = h;
-        });
-    });
-
+    // --- LOGIKA MONITORING & HASIL ---
     db.ref('hasil').on('value', snap => {
         dataHasilGlobal = [];
-        snap.forEach(c => { dataHasilGlobal.push({...c.val(), key: c.key}); });
+        snap.forEach(c => dataHasilGlobal.push({...c.val(), key: c.key}));
     });
 
     function renderMonitoring() {
@@ -236,8 +339,7 @@
     function exportHasil() {
         const t = document.getElementById("table-hasil");
         if(t.rows.length <= 1) return Swal.fire('Data Kosong', '', 'warning');
-        const wb = XLSX.utils.table_to_book(t);
-        XLSX.writeFile(wb, `Hasil_Ujian_${document.getElementById('f-mapel').value}.xlsx`);
+        XLSX.writeFile(XLSX.utils.table_to_book(t), `Hasil_Ujian_${document.getElementById('f-mapel').value}.xlsx`);
     }
 </script>
 </body>
