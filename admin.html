@@ -26,13 +26,14 @@
 <div class="sidebar">
     <div class="p-4 text-center">
         <div class="bg-warning text-blue-900 d-inline-block px-3 py-1 rounded fw-bold mb-2">CBT PRO</div>
-        <h6 class="fw-bold text-white">Administrator</h6>
+        <h6 id="sidebar-sekolah" class="fw-bold text-white small">Administrator</h6>
     </div>
     <nav class="mt-3">
         <a onclick="show('dash')" id="n-dash" class="nav-link active">📊 Monitoring</a>
         <a onclick="show('hasil')" id="n-hasil" class="nav-link">📝 Hasil Ujian</a>
         <a onclick="show('bank')" id="n-bank" class="nav-link">📚 Bank Soal</a>
         <a onclick="show('siswa')" id="n-siswa" class="nav-link">👥 Data Siswa</a>
+        <a onclick="show('set')" id="n-set" class="nav-link">⚙️ Pengaturan</a>
         <hr class="mx-3 text-white-50">
         <a href="index.html" class="nav-link text-warning">🚪 Keluar</a>
     </nav>
@@ -46,6 +47,33 @@
                 <thead class="table-light"><tr><th>Nama</th><th>Kelas</th><th>Status</th><th>Waktu Curang</th><th>Aksi</th></tr></thead>
                 <tbody id="list-monitoring"></tbody>
             </table>
+        </div>
+    </div>
+
+    <div id="p-set" class="hidden">
+        <h4 class="fw-bold mb-4">Pengaturan Aplikasi</h4>
+        <div class="card p-4">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Nama Sekolah</label>
+                    <input type="text" id="set-sekolah" class="form-control" placeholder="Contoh: SMA Negeri 1 Jakarta">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Nama Aplikasi</label>
+                    <input type="text" id="set-app" class="form-control" placeholder="Contoh: Ujian Akhir Semester">
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-bold">URL Logo Sekolah</label>
+                    <input type="text" id="set-logo" class="form-control" placeholder="https://link-gambar-logo.png">
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-bold text-danger">Kalimat Notifikasi Curang</label>
+                    <textarea id="set-pesan" class="form-control" rows="3" placeholder="Contoh: Anda terdeteksi keluar dari aplikasi ujian! Akun Anda otomatis terblokir."></textarea>
+                </div>
+                <div class="col-12 mt-4">
+                    <button onclick="simpanPengaturan()" class="btn btn-primary w-100 fw-bold py-2">SIMPAN PERUBAHAN</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -80,15 +108,12 @@
         </div>
         <div class="card p-4">
             <div class="row g-3">
-                <div class="col-md-4"><input type="text" id="bs-mapel" class="form-control" placeholder="Mata Pelajaran (Contoh: Matematika)"></div>
+                <div class="col-md-4"><input type="text" id="bs-mapel" class="form-control" placeholder="Mata Pelajaran"></div>
                 <div class="col-md-2"><input type="text" id="bs-kelas" class="form-control" placeholder="Kelas"></div>
                 <div class="col-md-2"><input type="number" id="bs-durasi" class="form-control" placeholder="Menit"></div>
                 <div class="col-md-2"><input type="date" id="bs-tgl" class="form-control"></div>
                 <div class="col-md-2"><select id="bs-show-nilai" class="form-select"><option value="ya">Tampil Nilai</option><option value="tidak">Sembunyi</option></select></div>
-                <div class="col-md-12">
-                    <label class="form-label fw-bold text-muted small">Pilih File Excel Soal:</label>
-                    <input type="file" id="bs-file" class="form-control" accept=".xlsx, .xls">
-                </div>
+                <div class="col-md-12"><input type="file" id="bs-file" class="form-control" accept=".xlsx, .xls"></div>
                 <div class="col-12"><button onclick="uploadSoal()" class="btn btn-primary w-100 fw-bold py-2">UPLOAD & AKTIFKAN SOAL</button></div>
             </div>
         </div>
@@ -130,11 +155,37 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    let masterHasil = [];
-
     function show(p) {
-        ['dash','hasil','bank','siswa'].forEach(i => { document.getElementById('p-'+i).classList.add('hidden'); document.getElementById('n-'+i).classList.remove('active'); });
-        document.getElementById('p-'+p).classList.remove('hidden'); document.getElementById('n-'+p).classList.add('active');
+        ['dash','hasil','bank','siswa','set'].forEach(i => { 
+            document.getElementById('p-'+i).classList.add('hidden'); 
+            document.getElementById('n-'+i).classList.remove('active'); 
+        });
+        document.getElementById('p-'+p).classList.remove('hidden'); 
+        document.getElementById('n-'+p).classList.add('active');
+    }
+
+    // FUNGSI PENGATURAN
+    db.ref('pengaturan').on('value', snap => {
+        const d = snap.val();
+        if(d) {
+            document.getElementById('set-sekolah').value = d.nama_sekolah || "";
+            document.getElementById('set-app').value = d.nama_aplikasi || "";
+            document.getElementById('set-logo').value = d.logo_url || "";
+            document.getElementById('set-pesan').value = d.pesan_curang || "";
+            document.getElementById('sidebar-sekolah').innerText = d.nama_sekolah || "Administrator";
+        }
+    });
+
+    function simpanPengaturan() {
+        const data = {
+            nama_sekolah: document.getElementById('set-sekolah').value,
+            nama_aplikasi: document.getElementById('set-app').value,
+            logo_url: document.getElementById('set-logo').value,
+            pesan_curang: document.getElementById('set-pesan').value
+        };
+        db.ref('pengaturan').set(data).then(() => {
+            Swal.fire('Berhasil', 'Pengaturan telah diperbarui', 'success');
+        });
     }
 
     // MONITORING & DATA SISWA
@@ -174,63 +225,27 @@
     });
 
     function uploadSoal() {
-        const mapel = document.getElementById('bs-mapel').value;
-        const kelas = document.getElementById('bs-kelas').value;
-        const durasi = document.getElementById('bs-durasi').value;
-        const tgl = document.getElementById('bs-tgl').value;
-        const fileInput = document.getElementById('bs-file');
-
-        if(!mapel || !kelas || !durasi || !tgl || !fileInput.files[0]) {
-            return Swal.fire('Data Belum Lengkap', 'Pastikan semua input terisi dan file Excel dipilih', 'warning');
-        }
-
+        const mapel = document.getElementById('bs-mapel').value, kelas = document.getElementById('bs-kelas').value, durasi = document.getElementById('bs-durasi').value, tgl = document.getElementById('bs-tgl').value, f = document.getElementById('bs-file').files[0];
+        if(!mapel || !kelas || !durasi || !tgl || !f) return Swal.fire('Data Belum Lengkap', 'Isi semua data', 'warning');
         const reader = new FileReader();
         reader.onload = (e) => {
-            try {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, {type: 'array'});
-                const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                const json = XLSX.utils.sheet_to_json(sheet);
-
-                if(json.length === 0) throw "File Excel Kosong";
-
-                // Map kolom Excel ke Format Database
-                const soalFormatted = json.map(row => ({
-                    pertanyaan: row.pertanyaan || row.Pertanyaan || "",
-                    gambar: row.url_gambar || row.url_gambar || "",
-                    opsi_a: row.opsi_a || row['opsi a'] || "",
-                    opsi_b: row.opsi_b || row['opsi b'] || "",
-                    opsi_c: row.opsi_c || row['opsi c'] || "",
-                    opsi_d: row.opsi_d || row['opsi d'] || "",
-                    kunci: row.kunci || row.Kunci || "",
-                    tipe: row.tipe_soal || row['tipe soal'] || "pilihan_ganda"
-                }));
-
-                db.ref('bank_soal').push({
-                    mapel: mapel, kelas: kelas, durasi: durasi, tanggal: tgl,
-                    showNilai: document.getElementById('bs-show-nilai').value,
-                    soal: soalFormatted, status: "aktif"
-                }).then(() => {
-                    Swal.fire('Berhasil', 'Bank Soal berhasil diupload dan diaktifkan', 'success');
-                    fileInput.value = "";
-                });
-            } catch (err) {
-                Swal.fire('Gagal Import', 'Periksa format kolom Excel Anda', 'error');
-            }
+            const data = new Uint8Array(e.target.result), workbook = XLSX.read(data, {type: 'array'}), json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+            const soalFormatted = json.map(row => ({ pertanyaan: row.pertanyaan||"", gambar: row.url_gambar||"", opsi_a: row.opsi_a||"", opsi_b: row.opsi_b||"", opsi_c: row.opsi_c||"", opsi_d: row.opsi_d||"", kunci: row.kunci||"", tipe: row.tipe_soal||"pilihan_ganda" }));
+            db.ref('bank_soal').push({ mapel, kelas, durasi, tanggal: tgl, showNilai: document.getElementById('bs-show-nilai').value, soal: soalFormatted, status: "aktif" }).then(() => Swal.fire('Berhasil', 'Soal Aktif', 'success'));
         };
-        reader.readAsArrayBuffer(fileInput.files[0]);
+        reader.readAsArrayBuffer(f);
     }
 
     function downloadTemplateSoal() {
         const header = [["pertanyaan", "url_gambar", "opsi_a", "opsi_b", "opsi_c", "opsi_d", "kunci", "tipe_soal"]];
-        const sample = [["Apa ibukota Indonesia?", "", "Jakarta", "Bandung", "Surabaya", "Medan", "a", "pilihan_ganda"]];
-        const ws = XLSX.utils.aoa_to_sheet(header.concat(sample));
+        const ws = XLSX.utils.aoa_to_sheet(header);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Template Soal");
-        XLSX.writeFile(wb, "Template_Soal_CBT.xlsx");
+        XLSX.utils.book_append_sheet(wb, ws, "Template");
+        XLSX.writeFile(wb, "Template_Soal.xlsx");
     }
 
     // HASIL UJIAN
+    let masterHasil = [];
     db.ref('hasil').on('value', snap => {
         masterHasil = []; snap.forEach(c => { masterHasil.push({ ...c.val(), key: c.key }); });
         renderHasil();
@@ -249,13 +264,13 @@
 
     function updateDropdownFilter(id, data) {
         const el = document.getElementById(id); const cur = el.value;
-        let h = `<option value="">-- Semua ${id === 'f-kelas' ? 'Kelas' : 'Mapel'} --</option>`;
+        let h = `<option value="">-- Semua --</option>`;
         data.sort().forEach(v => { h += `<option value="${v}">${v}</option>`; });
         el.innerHTML = h; el.value = cur;
     }
 
     function hapusData(path) {
-        Swal.fire({ title: 'Hapus?', text: "Data dihapus permanen!", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Ya' }).then((r) => { if (r.isConfirmed) db.ref(path).remove(); });
+        Swal.fire({ title: 'Hapus?', text: "Data dihapus!", icon: 'warning', showCancelButton: true, confirmButtonText: 'Ya' }).then((r) => { if (r.isConfirmed) db.ref(path).remove(); });
     }
 
     function uploadSiswa() {
@@ -264,7 +279,7 @@
         reader.onload = (e) => {
             const data = new Uint8Array(e.target.result), wb = XLSX.read(data, {type: 'array'}), json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
             json.forEach(item => { if(item.nama) db.ref('siswa').push({ nama: item.nama, kelas: item.kelas, username: item.username, sandi: item.sandi, status: "aktif" }); });
-            Swal.fire('Sukses','Data Siswa diimport','success');
+            Swal.fire('Sukses','Import Selesai','success');
         };
         reader.readAsArrayBuffer(f);
     }
@@ -274,7 +289,7 @@
         const clone = table.cloneNode(true);
         clone.querySelectorAll('tr').forEach(tr => { if(tr.lastElementChild) tr.removeChild(tr.lastElementChild); });
         const wb = XLSX.utils.table_to_book(clone);
-        XLSX.writeFile(wb, `Hasil_Ujian_${new Date().getTime()}.xlsx`);
+        XLSX.writeFile(wb, `Hasil_Ujian.xlsx`);
     }
 </script>
 </body>
