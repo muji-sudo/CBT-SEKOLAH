@@ -10,10 +10,13 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body { font-family: 'Inter', sans-serif; -webkit-user-select: none; user-select: none; }
-        .option-card { border: 2px solid #f1f5f9; cursor: pointer; transition: 0.2s; }
-        .option-card:hover { border-color: #cbd5e1; }
+        .option-card { border: 2px solid #f1f5f9; cursor: pointer; transition: 0.2s; border-radius: 1rem; }
+        .option-card:hover { border-color: #cbd5e1; background: #f8fafc; }
+        .option-card input:checked + div { color: #1e40af; font-weight: 700; }
         .soal-gambar { max-width: 100%; max-height: 300px; border-radius: 12px; margin-bottom: 1rem; border: 1px solid #e2e8f0; display: block; margin-left: auto; margin-right: auto; }
         .badge-tipe { background: #1e3a8a; color: white; padding: 2px 10px; border-radius: 20px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+        /* Custom Checkbox/Radio Size */
+        input[type="radio"], input[type="checkbox"] { width: 1.5rem; height: 1.5rem; cursor: pointer; }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen">
@@ -49,8 +52,13 @@
 
         <main class="container mx-auto p-4 max-w-4xl">
             <div id="box-start" class="bg-white p-8 rounded-3xl shadow-xl text-center mt-4 border border-slate-200">
-                <h3 id="t-mapel" class="text-2xl font-black text-blue-900 mb-6 uppercase tracking-tight">-</h3>
-                <button onclick="startNow()" class="bg-blue-700 text-white w-full py-4 rounded-2xl font-black shadow-lg hover:bg-blue-800 transition-all transform active:scale-95">MULAI UJIAN SEKARANG</button>
+                <h3 id="t-mapel" class="text-2xl font-black text-blue-900 mb-2 uppercase tracking-tight">-</h3>
+                <div id="info-status" class="mb-6">
+                    <p class="text-slate-500 text-sm italic">Mencari jadwal ujian...</p>
+                </div>
+                <div id="btn-start-container" class="hidden">
+                    <button onclick="startNow()" class="bg-blue-700 text-white w-full py-4 rounded-2xl font-black shadow-lg hover:bg-blue-800 transition-all transform active:scale-95">MULAI UJIAN SEKARANG</button>
+                </div>
             </div>
 
             <div id="box-soal" class="hidden mt-4">
@@ -95,11 +103,13 @@
 
     let soalData = [], index = 0, paket = null, jawabanUser = {}, isExamActive = false;
 
+    // AMBIL PESAN CURANG
     db.ref('pengaturan').on('value', snap => {
         const d = snap.val();
         if(d && d.pesan_curang) document.getElementById('teks-curang').innerText = d.pesan_curang;
     });
 
+    // CEK STATUS BLOKIR
     db.ref('siswa/' + siswa.key).on('value', snap => {
         const d = snap.val();
         if(d && (d.status === "curang" || d.status === "blokir")) {
@@ -118,26 +128,54 @@
     window.addEventListener("blur", periksaKecurangan);
     document.addEventListener("visibilitychange", () => { if(document.hidden) periksaKecurangan(); });
 
-    db.ref('bank_soal').on('value', snap => {
+    // CARI JADWAL DAN CEK APAKAH SUDAH PERNAH MENGERJAKAN
+    db.ref('bank_soal').on('value', async snap => {
         const tglSkrg = new Date().toLocaleDateString('en-CA');
-        snap.forEach(c => {
-            const d = c.val();
-            if(d.kelas == siswa.kelas && d.tanggal == tglSkrg && d.status == "aktif") {
-                paket = d;
-                document.getElementById('t-mapel').innerText = d.mapel;
-                document.getElementById('h-mapel').innerText = d.mapel;
+        let ditemukan = false;
+        
+        for (const child of Object.values(snap.val() || {})) {
+            if(child.kelas == siswa.kelas && child.tanggal == tglSkrg && child.status == "aktif") {
+                paket = child;
+                ditemukan = true;
+                document.getElementById('t-mapel').innerText = paket.mapel;
+                document.getElementById('h-mapel').innerText = paket.mapel;
+                
+                // Cek Riwayat di Tabel Hasil
+                const hasilSnap = await db.ref('hasil').orderByChild('nama').equalTo(siswa.nama).once('value');
+                let sudahKerja = false;
+                hasilSnap.forEach(h => { if(h.val().mapel === paket.mapel) sudahKerja = true; });
+
+                if(sudahKerja) {
+                    document.getElementById('info-status').innerHTML = `<div class="bg-green-100 text-green-700 p-4 rounded-2xl font-bold">Anda sudah menyelesaikan ujian ini.</div>`;
+                    document.getElementById('btn-start-container').classList.add('hidden');
+                } else {
+                    document.getElementById('info-status').innerHTML = `<p class="text-slate-500 text-sm">Pastikan koneksi stabil sebelum memulai.</p>`;
+                    document.getElementById('btn-start-container').classList.remove('hidden');
+                }
             }
-        });
+        }
+        if(!ditemukan) document.getElementById('info-status').innerText = "Tidak ada jadwal ujian aktif.";
     });
 
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
     async function startNow() {
-        if(!paket) return Swal.fire('Informasi','Belum ada jadwal hari ini','info');
+        if(!paket) return;
         const snap = await db.ref('progres_jawaban/' + paket.mapel + '/' + siswa.key).once('value');
         if(snap.exists()) jawabanUser = snap.val();
+        
         isExamActive = true;
         document.getElementById('box-start').classList.add('hidden');
         document.getElementById('box-soal').classList.remove('hidden');
-        soalData = paket.soal;
+        
+        // ACAK SOAL
+        soalData = shuffleArray([...paket.soal]);
         renderSoal();
         startTimer(paket.durasi);
     }
@@ -149,7 +187,7 @@
         document.getElementById('no-skrg').innerText = index + 1;
         document.getElementById('soal-teks').innerText = s.pertanyaan;
         
-        // Label Tipe Soal
+        // Label Tipe
         let labelTxt = "Pilihan Ganda";
         if(tipe === "kompleks") labelTxt = "Pilihan Ganda Kompleks";
         if(tipe === "benar_salah") labelTxt = "Benar / Salah";
@@ -163,16 +201,18 @@
         
         limit.forEach(o => {
             const txt = s['opsi_'+o];
+            if(!txt && tipe !== "benar_salah") return;
+            
             const isChecked = (tipe === 'kompleks') 
-                ? (jawabanUser[index] && jawabanUser[index].includes(o))
-                : (jawabanUser[index] == o);
+                ? (jawabanUser[s.pertanyaan] && jawabanUser[s.pertanyaan].includes(o))
+                : (jawabanUser[s.pertanyaan] == o);
             
             const inputType = (tipe === 'kompleks') ? 'checkbox' : 'radio';
 
-            h += `<label class="option-card flex items-center p-4 rounded-2xl bg-white border-2 shadow-sm mb-3">
+            h += `<label class="option-card flex items-center p-5 bg-white border-2 shadow-sm mb-3">
                 <input type="${inputType}" name="ans" value="${o}" ${isChecked ? 'checked' : ''} 
-                    onchange="saveAnswer('${o}', '${tipe}')" class="w-6 h-6 accent-blue-700">
-                <span class="ml-4 text-slate-700 font-medium"><b>${o.toUpperCase()}.</b> ${txt}</span>
+                    onchange="saveAnswer('${o}', '${tipe}', '${s.pertanyaan}')" class="accent-blue-700">
+                <div class="ml-4 text-slate-700 text-lg flex-1">${txt}</div>
             </label>`;
         });
         
@@ -182,18 +222,18 @@
         document.getElementById('btn-finish').classList.toggle('hidden', index != soalData.length-1);
     }
 
-    function saveAnswer(o, tipe) {
+    function saveAnswer(o, tipe, qKey) {
         if(tipe === 'kompleks') {
-            if(!jawabanUser[index]) jawabanUser[index] = "";
-            let current = jawabanUser[index].split(',').filter(x => x);
+            if(!jawabanUser[qKey]) jawabanUser[qKey] = "";
+            let current = jawabanUser[qKey].split(',').filter(x => x);
             if(current.includes(o)) {
                 current = current.filter(x => x !== o);
             } else {
                 current.push(o);
             }
-            jawabanUser[index] = current.sort().join(',');
+            jawabanUser[qKey] = current.sort().join(',');
         } else {
-            jawabanUser[index] = o;
+            jawabanUser[qKey] = o;
         }
         db.ref('progres_jawaban/' + paket.mapel + '/' + siswa.key).set(jawabanUser);
     }
@@ -206,9 +246,9 @@
         isExamActive = false;
         document.getElementById('modal-kumpul').classList.add('hidden');
         let benar = 0;
-        soalData.forEach((s, i) => {
+        soalData.forEach((s) => {
             let k = (s.kunci || "").toLowerCase().replace(/\s/g, '');
-            let j = (jawabanUser[i] || "").toLowerCase().replace(/\s/g, '');
+            let j = (jawabanUser[s.pertanyaan] || "").toLowerCase().replace(/\s/g, '');
             if(j === k) benar++;
         });
         const nilai = Math.round((benar/soalData.length)*100);
