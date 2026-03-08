@@ -57,18 +57,12 @@
         <div class="card p-3 mb-3">
             <div class="row g-2">
                 <div class="col-md-5">
-                    <select id="f-kelas" class="form-select" onchange="renderHasil()">
-                        <option value="">-- Semua Kelas --</option>
-                    </select>
+                    <select id="f-kelas" class="form-select" onchange="renderHasil()"><option value="">-- Semua Kelas --</option></select>
                 </div>
                 <div class="col-md-5">
-                    <select id="f-mapel" class="form-select" onchange="renderHasil()">
-                        <option value="">-- Semua Mapel --</option>
-                    </select>
+                    <select id="f-mapel" class="form-select" onchange="renderHasil()"><option value="">-- Semua Mapel --</option></select>
                 </div>
-                <div class="col-md-2">
-                    <button onclick="resetFilterHasil()" class="btn btn-outline-secondary w-100">Reset</button>
-                </div>
+                <div class="col-md-2"><button onclick="resetFilterHasil()" class="btn btn-outline-secondary w-100">Reset</button></div>
             </div>
         </div>
         <div class="card p-0 overflow-hidden">
@@ -80,16 +74,22 @@
     </div>
 
     <div id="p-bank" class="hidden">
-        <h4 class="fw-bold mb-4">Bank Soal</h4>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="fw-bold">Bank Soal</h4>
+            <button onclick="downloadTemplateSoal()" class="btn btn-outline-primary btn-sm fw-bold">📥 Download Template Soal</button>
+        </div>
         <div class="card p-4">
             <div class="row g-3">
-                <div class="col-md-4"><input type="text" id="bs-mapel" class="form-control" placeholder="Mata Pelajaran"></div>
+                <div class="col-md-4"><input type="text" id="bs-mapel" class="form-control" placeholder="Mata Pelajaran (Contoh: Matematika)"></div>
                 <div class="col-md-2"><input type="text" id="bs-kelas" class="form-control" placeholder="Kelas"></div>
                 <div class="col-md-2"><input type="number" id="bs-durasi" class="form-control" placeholder="Menit"></div>
                 <div class="col-md-2"><input type="date" id="bs-tgl" class="form-control"></div>
                 <div class="col-md-2"><select id="bs-show-nilai" class="form-select"><option value="ya">Tampil Nilai</option><option value="tidak">Sembunyi</option></select></div>
-                <div class="col-md-12"><input type="file" id="bs-file" class="form-control" accept=".xlsx"></div>
-                <div class="col-12"><button onclick="uploadSoal()" class="btn btn-primary w-100 fw-bold">Upload Soal</button></div>
+                <div class="col-md-12">
+                    <label class="form-label fw-bold text-muted small">Pilih File Excel Soal:</label>
+                    <input type="file" id="bs-file" class="form-control" accept=".xlsx, .xls">
+                </div>
+                <div class="col-12"><button onclick="uploadSoal()" class="btn btn-primary w-100 fw-bold py-2">UPLOAD & AKTIFKAN SOAL</button></div>
             </div>
         </div>
         <div class="card p-0 overflow-hidden">
@@ -139,27 +139,13 @@
 
     // MONITORING & DATA SISWA
     db.ref('siswa').on('value', snap => {
-        let hMon = "", hSis = "";
-        let setKelas = new Set();
+        let hMon = "", hSis = ""; let setKelas = new Set();
         snap.forEach(s => {
-            const v = s.val();
-            const key = s.key;
-            setKelas.add(v.kelas);
-
-            // Row Monitoring
+            const v = s.val(), key = s.key; setKelas.add(v.kelas);
             let stBad = v.status === 'curang' ? '<span class="badge bg-danger">CURANG</span>' : (v.status === 'blokir' ? '<span class="badge bg-dark">BLOKIR</span>' : '<span class="badge bg-success">AKTIF</span>');
-            hMon += `<tr><td>${v.nama}</td><td>${v.kelas}</td><td>${stBad}</td><td><small class="text-danger">${v.waktu_curang || '-'}</small></td>
-                <td><button onclick="db.ref('siswa/${key}').update({status:'aktif', waktu_curang:null})" class="btn btn-xs btn-success">Reset</button></td></tr>`;
-
-            // Row Data Siswa
-            let stSis = v.status === 'aktif' ? '<span class="text-success fw-bold">Aktif</span>' : '<span class="text-danger fw-bold">Nonaktif/Blokir</span>';
-            hSis += `<tr>
-                <td>${v.nama}</td><td>${v.kelas}</td><td>${v.username} / ${v.sandi}</td><td>${stSis}</td>
-                <td>
-                    <button onclick="db.ref('siswa/${key}').update({status:'aktif'})" class="btn btn-xs btn-outline-primary">Aktifkan</button>
-                    <button onclick="db.ref('siswa/${key}').update({status:'blokir'})" class="btn btn-xs btn-outline-warning">Blokir</button>
-                    <button onclick="hapusData('siswa/${key}')" class="btn btn-xs btn-danger">Hapus</button>
-                </td></tr>`;
+            hMon += `<tr><td>${v.nama}</td><td>${v.kelas}</td><td>${stBad}</td><td><small class="text-danger">${v.waktu_curang || '-'}</small></td><td><button onclick="db.ref('siswa/${key}').update({status:'aktif', waktu_curang:null})" class="btn btn-xs btn-success">Reset</button></td></tr>`;
+            let stSis = v.status === 'aktif' ? '<span class="text-success fw-bold">Aktif</span>' : '<span class="text-danger fw-bold">Blokir</span>';
+            hSis += `<tr><td>${v.nama}</td><td>${v.kelas}</td><td>${v.username} / ${v.sandi}</td><td>${stSis}</td><td><button onclick="db.ref('siswa/${key}').update({status:'aktif'})" class="btn btn-xs btn-outline-primary">Aktifkan</button> <button onclick="db.ref('siswa/${key}').update({status:'blokir'})" class="btn btn-xs btn-outline-warning">Blokir</button> <button onclick="hapusData('siswa/${key}')" class="btn btn-xs btn-danger">Hapus</button></td></tr>`;
         });
         document.getElementById('list-monitoring').innerHTML = hMon;
         document.getElementById('t-siswa').innerHTML = hSis;
@@ -177,99 +163,114 @@
 
     // BANK SOAL
     db.ref('bank_soal').on('value', snap => {
-        let h = "";
-        let setMapel = new Set();
+        let h = ""; let setMapel = new Set();
         snap.forEach(c => {
-            const v = c.val();
-            const key = c.key;
-            setMapel.add(v.mapel);
+            const v = c.val(), key = c.key; setMapel.add(v.mapel);
             let st = v.status === 'aktif' ? '<span class="badge bg-success">Aktif</span>' : '<span class="badge bg-secondary">Nonaktif</span>';
-            h += `<tr>
-                <td>${v.mapel}</td><td>${v.kelas}</td><td>${st}</td>
-                <td>
-                    <button onclick="db.ref('bank_soal/${key}').update({status:'aktif'})" class="btn btn-xs btn-outline-success">Aktif</button>
-                    <button onclick="db.ref('bank_soal/${key}').update({status:'nonaktif'})" class="btn btn-xs btn-outline-secondary">Nonaktif</button>
-                    <button onclick="hapusData('bank_soal/${key}')" class="btn btn-xs btn-danger">Hapus</button>
-                </td></tr>`;
+            h += `<tr><td>${v.mapel}</td><td>${v.kelas}</td><td>${st}</td><td><button onclick="db.ref('bank_soal/${key}').update({status:'aktif'})" class="btn btn-xs btn-outline-success">Aktif</button> <button onclick="db.ref('bank_soal/${key}').update({status:'nonaktif'})" class="btn btn-xs btn-outline-secondary">Nonaktif</button> <button onclick="hapusData('bank_soal/${key}')" class="btn btn-xs btn-danger">Hapus</button></td></tr>`;
         });
         document.getElementById('t-soal').innerHTML = h;
         updateDropdownFilter('f-mapel', Array.from(setMapel));
     });
 
-    // HASIL UJIAN & FILTERING
+    function uploadSoal() {
+        const mapel = document.getElementById('bs-mapel').value;
+        const kelas = document.getElementById('bs-kelas').value;
+        const durasi = document.getElementById('bs-durasi').value;
+        const tgl = document.getElementById('bs-tgl').value;
+        const fileInput = document.getElementById('bs-file');
+
+        if(!mapel || !kelas || !durasi || !tgl || !fileInput.files[0]) {
+            return Swal.fire('Data Belum Lengkap', 'Pastikan semua input terisi dan file Excel dipilih', 'warning');
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const json = XLSX.utils.sheet_to_json(sheet);
+
+                if(json.length === 0) throw "File Excel Kosong";
+
+                // Map kolom Excel ke Format Database
+                const soalFormatted = json.map(row => ({
+                    pertanyaan: row.pertanyaan || row.Pertanyaan || "",
+                    gambar: row.url_gambar || row.url_gambar || "",
+                    opsi_a: row.opsi_a || row['opsi a'] || "",
+                    opsi_b: row.opsi_b || row['opsi b'] || "",
+                    opsi_c: row.opsi_c || row['opsi c'] || "",
+                    opsi_d: row.opsi_d || row['opsi d'] || "",
+                    kunci: row.kunci || row.Kunci || "",
+                    tipe: row.tipe_soal || row['tipe soal'] || "pilihan_ganda"
+                }));
+
+                db.ref('bank_soal').push({
+                    mapel: mapel, kelas: kelas, durasi: durasi, tanggal: tgl,
+                    showNilai: document.getElementById('bs-show-nilai').value,
+                    soal: soalFormatted, status: "aktif"
+                }).then(() => {
+                    Swal.fire('Berhasil', 'Bank Soal berhasil diupload dan diaktifkan', 'success');
+                    fileInput.value = "";
+                });
+            } catch (err) {
+                Swal.fire('Gagal Import', 'Periksa format kolom Excel Anda', 'error');
+            }
+        };
+        reader.readAsArrayBuffer(fileInput.files[0]);
+    }
+
+    function downloadTemplateSoal() {
+        const header = [["pertanyaan", "url_gambar", "opsi_a", "opsi_b", "opsi_c", "opsi_d", "kunci", "tipe_soal"]];
+        const sample = [["Apa ibukota Indonesia?", "", "Jakarta", "Bandung", "Surabaya", "Medan", "a", "pilihan_ganda"]];
+        const ws = XLSX.utils.aoa_to_sheet(header.concat(sample));
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Template Soal");
+        XLSX.writeFile(wb, "Template_Soal_CBT.xlsx");
+    }
+
+    // HASIL UJIAN
     db.ref('hasil').on('value', snap => {
-        masterHasil = [];
-        snap.forEach(c => { masterHasil.push({ ...c.val(), key: c.key }); });
+        masterHasil = []; snap.forEach(c => { masterHasil.push({ ...c.val(), key: c.key }); });
         renderHasil();
     });
 
     function renderHasil() {
-        const fk = document.getElementById('f-kelas').value;
-        const fm = document.getElementById('f-mapel').value;
+        const fk = document.getElementById('f-kelas').value, fm = document.getElementById('f-mapel').value;
         let h = "";
         masterHasil.filter(d => (fk === "" || d.kelas === fk) && (fm === "" || d.mapel === fm)).forEach(v => {
-            h += `<tr><td>${v.nama}</td><td>${v.kelas}</td><td>${v.mapel}</td><td><b>${v.nilai}</b></td><td>${v.waktu}</td>
-                <td><button onclick="hapusData('hasil/${v.key}')" class="btn btn-xs btn-danger">Hapus</button></td></tr>`;
+            h += `<tr><td>${v.nama}</td><td>${v.kelas}</td><td>${v.mapel}</td><td><b>${v.nilai}</b></td><td>${v.waktu}</td><td><button onclick="hapusData('hasil/${v.key}')" class="btn btn-xs btn-danger">Hapus</button></td></tr>`;
         });
         document.getElementById('list-hasil').innerHTML = h;
     }
 
-    function resetFilterHasil() {
-        document.getElementById('f-kelas').value = "";
-        document.getElementById('f-mapel').value = "";
-        renderHasil();
-    }
+    function resetFilterHasil() { document.getElementById('f-kelas').value = ""; document.getElementById('f-mapel').value = ""; renderHasil(); }
 
     function updateDropdownFilter(id, data) {
-        const el = document.getElementById(id);
-        const currentVal = el.value;
+        const el = document.getElementById(id); const cur = el.value;
         let h = `<option value="">-- Semua ${id === 'f-kelas' ? 'Kelas' : 'Mapel'} --</option>`;
         data.sort().forEach(v => { h += `<option value="${v}">${v}</option>`; });
-        el.innerHTML = h;
-        el.value = currentVal;
+        el.innerHTML = h; el.value = cur;
     }
 
-    // UTILITIES
     function hapusData(path) {
-        Swal.fire({ title: 'Hapus Data?', text: "Data akan dihapus permanen dari sistem!", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Ya, Hapus!' }).then((result) => {
-            if (result.isConfirmed) db.ref(path).remove();
-        });
+        Swal.fire({ title: 'Hapus?', text: "Data dihapus permanen!", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Ya' }).then((r) => { if (r.isConfirmed) db.ref(path).remove(); });
     }
 
     function uploadSiswa() {
-        const file = document.getElementById('s-file').files[0];
-        if(!file) return;
+        const f = document.getElementById('s-file').files[0]; if(!f) return;
         const reader = new FileReader();
         reader.onload = (e) => {
             const data = new Uint8Array(e.target.result), wb = XLSX.read(data, {type: 'array'}), json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
             json.forEach(item => { if(item.nama) db.ref('siswa').push({ nama: item.nama, kelas: item.kelas, username: item.username, sandi: item.sandi, status: "aktif" }); });
-            Swal.fire('Sukses','Data Excel berhasil diimport','success');
-        };
-        reader.readAsArrayBuffer(file);
-    }
-
-    function uploadSoal() {
-        const f = document.getElementById('bs-file').files[0];
-        if(!f) return;
-        const reader = new FileReader();
-        reader.onload = e => {
-            const data = new Uint8Array(e.target.result), wb = XLSX.read(data, {type:'array'}), json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-            db.ref('bank_soal').push({ 
-                mapel: document.getElementById('bs-mapel').value, 
-                kelas: document.getElementById('bs-kelas').value, 
-                durasi: document.getElementById('bs-durasi').value, 
-                tanggal: document.getElementById('bs-tgl').value, 
-                showNilai: document.getElementById('bs-show-nilai').value, 
-                soal: json, 
-                status: "aktif" 
-            }).then(() => Swal.fire('Ok','Soal Berhasil Diupload','success'));
+            Swal.fire('Sukses','Data Siswa diimport','success');
         };
         reader.readAsArrayBuffer(f);
     }
 
     function exportHasil() {
         const table = document.getElementById("table-hasil");
-        // Kita cloning table untuk hapus kolom "Aksi" saat export excel
         const clone = table.cloneNode(true);
         clone.querySelectorAll('tr').forEach(tr => { if(tr.lastElementChild) tr.removeChild(tr.lastElementChild); });
         const wb = XLSX.utils.table_to_book(clone);
