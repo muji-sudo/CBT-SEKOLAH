@@ -19,7 +19,7 @@
 
     <div id="box-curang" class="hidden fixed inset-0 bg-red-600 z-[9999] flex flex-col items-center justify-center text-white p-6 text-center">
         <h1 class="text-5xl font-black mb-4">STOP!</h1>
-        <p id="teks-curang" class="text-2xl font-bold mb-8"></p>
+        <p id="teks-curang" class="text-2xl font-bold mb-8">Terdeteksi Curang! Akun Anda telah diblokir.</p>
         <button onclick="keluarSistem()" class="bg-white text-red-600 font-bold py-3 px-8 rounded-xl shadow-lg">Kembali Login</button>
     </div>
 
@@ -85,30 +85,23 @@
     if(!siswa) window.location.href="index.html";
     document.getElementById('n-siswa').innerText = siswa.nama;
 
-    // CEK STATUS BLOKIR REALTIME DARI ADMIN
+    let soalData = [], index = 0, paket = null, jawabanUser = {}, isExamActive = false;
+
+    // CEK STATUS REALTIME
     db.ref('siswa/' + siswa.key).on('value', snap => {
         const d = snap.val();
-        if(d && d.status === "blokir") {
+        if(d && (d.status === "blokir" || d.status === "curang")) {
             isExamActive = false;
             document.getElementById('wrapper-ujian').classList.add('hidden');
             document.getElementById('box-curang').classList.remove('hidden');
-            document.getElementById('teks-curang').innerText = "Akun Anda telah diblokir oleh Admin.";
+            if(d.status === "blokir") document.getElementById('teks-curang').innerText = "Akun Anda telah diblokir oleh Admin.";
         }
-    });
-
-    let soalData = [], index = 0, paket = null, jawabanUser = {}, isExamActive = false;
-
-    db.ref('pengaturan').on('value', snap => {
-        const d = snap.val();
-        if(d) document.getElementById('teks-curang').innerText = d.pesan_curang || "Terdeteksi Curang!";
     });
 
     function periksaKecurangan() {
         if (isExamActive) {
             isExamActive = false;
-            db.ref('siswa/' + siswa.key).update({ status: "curang" });
-            document.getElementById('wrapper-ujian').classList.add('hidden');
-            document.getElementById('box-curang').classList.remove('hidden');
+            db.ref('siswa/' + siswa.key).update({ status: "curang", waktu_curang: new Date().toLocaleString() });
         }
     }
     window.addEventListener("blur", periksaKecurangan);
@@ -126,8 +119,16 @@
         });
     });
 
-    function startNow() {
+    async function startNow() {
         if(!paket) return Swal.fire('Informasi','Belum ada jadwal ujian hari ini','info');
+        
+        // RESUME SYSTEM: Ambil jawaban tersimpan
+        const snap = await db.ref('progres_jawaban/' + paket.mapel + '/' + siswa.key).once('value');
+        if(snap.exists()) {
+            jawabanUser = snap.val();
+            console.log("Melanjutkan progres...");
+        }
+
         isExamActive = true;
         document.getElementById('box-start').classList.add('hidden');
         document.getElementById('box-soal').classList.remove('hidden');
@@ -141,7 +142,6 @@
         document.getElementById('no-skrg').innerText = index + 1;
         document.getElementById('soal-teks').innerText = s.pertanyaan;
         
-        // Render Gambar jika kolom 'gambar' di excel terisi URL
         const imgCont = document.getElementById('container-gambar');
         imgCont.innerHTML = (s.gambar) ? `<img src="${s.gambar}" class="soal-gambar">` : "";
 
@@ -162,7 +162,12 @@
         document.getElementById('btn-finish').classList.toggle('hidden', index != soalData.length-1);
     }
 
-    function saveAnswer(o) { jawabanUser[index] = o; }
+    function saveAnswer(o) { 
+        jawabanUser[index] = o; 
+        // AUTO SAVE KE DATABASE
+        db.ref('progres_jawaban/' + paket.mapel + '/' + siswa.key).update({ [index]: o });
+    }
+
     function nav(d) { index += d; renderSoal(); }
     function finish() { document.getElementById('modal-kumpul').classList.remove('hidden'); }
     function batalKumpul() { document.getElementById('modal-kumpul').classList.add('hidden'); }
@@ -173,8 +178,11 @@
         let benar = 0;
         soalData.forEach((s, i) => { if(jawabanUser[i] == s.kunci.toLowerCase()) benar++; });
         const nilai = Math.round((benar/soalData.length)*100);
+        
         db.ref('hasil').push({ nama: siswa.nama, kelas: siswa.kelas, mapel: paket.mapel, nilai: nilai, waktu: new Date().toLocaleString() })
         .then(() => {
+            // Hapus progres karena ujian sudah selesai
+            db.ref('progres_jawaban/' + paket.mapel + '/' + siswa.key).remove();
             document.getElementById('wrapper-ujian').classList.add('hidden');
             document.getElementById('teks-nilai').innerText = (paket.showNilai == "ya") ? "Nilai: " + nilai : "Jawaban Terkirim!";
             document.getElementById('box-selesai').classList.remove('hidden');
