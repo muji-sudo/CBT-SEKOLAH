@@ -18,8 +18,8 @@
         .nav-link:hover, .nav-link.active { background: rgba(255,255,255,0.1); color: white; }
         .card { border: none; border-radius: 15px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); margin-bottom: 20px; }
         .hidden { display: none; }
-        .btn-xs { padding: 0.1rem 0.4rem; font-size: 0.75rem; }
         .status-dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+        .btn-xs { padding: 0.1rem 0.4rem; font-size: 0.75rem; }
     </style>
 </head>
 <body>
@@ -47,15 +47,10 @@
             <div class="row g-2">
                 <div class="col-md-5"><select id="mon-f-kelas" class="form-select"><option value="">-- Filter Kelas --</option></select></div>
                 <div class="col-md-5"><select id="mon-f-mapel" class="form-select"><option value="">-- Filter Mapel --</option></select></div>
-                <div class="col-md-2"><button onclick="renderMonitoring()" class="btn btn-primary w-100">Tampilkan</button></div>
+                <div class="col-md-2"><button onclick="renderMonitoring()" class="btn btn-primary w-100 fw-bold">TAMPILKAN</button></div>
             </div>
         </div>
-        <div class="card p-0 overflow-hidden">
-            <table class="table table-hover mb-0">
-                <thead class="table-light"><tr><th>Nama Siswa</th><th>Kelas</th><th>Status</th><th>Waktu Curang</th><th>Aksi</th></tr></thead>
-                <tbody id="list-monitoring"></tbody>
-            </table>
-        </div>
+        <div class="card p-0 overflow-hidden"><table class="table table-hover mb-0"><thead class="table-light"><tr><th>Nama</th><th>Kelas</th><th>Status</th><th>Pelanggaran</th><th>Aksi</th></tr></thead><tbody id="list-monitoring"></tbody></table></div>
     </div>
 
     <div id="p-hasil" class="hidden">
@@ -67,65 +62,56 @@
             <div class="row g-2">
                 <div class="col-md-4"><select id="f-kelas" class="form-select"><option value="">-- Pilih Kelas --</option></select></div>
                 <div class="col-md-4"><select id="f-mapel" class="form-select"><option value="">-- Pilih Mapel --</option></select></div>
-                <div class="col-md-2"><button onclick="renderHasil()" class="btn btn-primary w-100 font-bold">TAMPILKAN</button></div>
-                <div class="col-md-2"><button onclick="resetFilterHasil()" class="btn btn-outline-secondary w-100">Reset</button></div>
+                <div class="col-md-4"><button onclick="renderHasil()" class="btn btn-primary w-100 fw-bold">TAMPILKAN DATA</button></div>
             </div>
         </div>
-        <div class="card p-0 overflow-hidden">
-            <table class="table table-striped mb-0" id="table-hasil">
-                <thead class="table-dark"><tr><th>Nama</th><th>Kelas</th><th>Mapel</th><th>Nilai</th><th>Waktu</th><th>Aksi</th></tr></thead>
-                <tbody id="list-hasil"></tbody>
-            </table>
-        </div>
-    </div>
-
-    <div id="p-set" class="hidden">
-        <h4 class="fw-bold mb-4">Pengaturan Aplikasi</h4>
-        <div class="card p-4">
-            <div class="row g-3">
-                <div class="col-md-6"><label class="form-label fw-bold">Nama Sekolah</label><input type="text" id="set-sekolah" class="form-control"></div>
-                <div class="col-md-6"><label class="form-label fw-bold">Nama Aplikasi</label><input type="text" id="set-app" class="form-control"></div>
-                <div class="col-12"><label class="form-label fw-bold">URL Logo Sekolah</label><input type="text" id="set-logo" class="form-control"></div>
-                <div class="col-12"><label class="form-label fw-bold text-danger">Pesan Notifikasi Curang</label><textarea id="set-pesan" class="form-control" rows="3"></textarea></div>
-                <div class="col-12 mt-4"><button onclick="simpanPengaturan()" class="btn btn-primary w-100 fw-bold">SIMPAN PERUBAHAN</button></div>
-            </div>
-        </div>
-    </div>
-
-    <div id="p-bank" class="hidden">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h4 class="fw-bold">Bank Soal</h4>
-            <button onclick="downloadTemplateSoal()" class="btn btn-outline-primary btn-sm fw-bold">📥 Template Soal</button>
-        </div>
-        <div class="card p-4">
-            <div class="row g-3">
-                <div class="col-md-4"><input type="text" id="bs-mapel" class="form-control" placeholder="Mapel"></div>
-                <div class="col-md-2"><input type="text" id="bs-kelas" class="form-control" placeholder="Kelas"></div>
-                <div class="col-md-2"><input type="number" id="bs-durasi" class="form-control" placeholder="Menit"></div>
-                <div class="col-md-2"><input type="date" id="bs-tgl" class="form-control"></div>
-                <div class="col-md-2"><select id="bs-show-nilai" class="form-select"><option value="ya">Tampil Nilai</option><option value="tidak">Sembunyi</option></select></div>
-                <div class="col-12"><input type="file" id="bs-file" class="form-control" accept=".xlsx"></div>
-                <div class="col-12"><button onclick="uploadSoal()" class="btn btn-primary w-100 fw-bold">UPLOAD SOAL</button></div>
-            </div>
-        </div>
-        <div class="card p-0 overflow-hidden"><table class="table mb-0"><thead class="table-dark"><tr><th>Mapel</th><th>Kelas</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="t-soal"></tbody></table></div>
+        <div class="card p-0 overflow-hidden"><table class="table table-striped mb-0" id="table-hasil"><thead class="table-dark"><tr><th>Nama</th><th>Kelas</th><th>Mapel</th><th>Nilai</th><th>Waktu</th><th>Aksi</th></tr></thead><tbody id="list-hasil"></tbody></table></div>
     </div>
 
     <div id="p-siswa" class="hidden">
         <h4 class="fw-bold mb-4">Data Siswa</h4>
         <div class="card p-4 mb-4">
             <div class="row g-2 mb-4">
-                <div class="col-md-3"><input type="text" id="m-nama" class="form-control" placeholder="Nama"></div>
+                <div class="col-md-3"><input type="text" id="m-nama" class="form-control" placeholder="Nama Lengkap"></div>
                 <div class="col-md-2"><input type="text" id="m-kelas" class="form-control" placeholder="Kelas"></div>
-                <div class="col-md-3"><input type="text" id="m-user" class="form-control" placeholder="User"></div>
-                <div class="col-md-2"><input type="text" id="m-pass" class="form-control" placeholder="Pass"></div>
+                <div class="col-md-3"><input type="text" id="m-user" class="form-control" placeholder="Username"></div>
+                <div class="col-md-2"><input type="text" id="m-pass" class="form-control" placeholder="Password"></div>
                 <div class="col-md-2"><button onclick="addManualSiswa()" class="btn btn-primary w-100">Tambah</button></div>
             </div>
             <hr>
             <input type="file" id="s-file" class="form-control mb-2" accept=".xlsx">
-            <button onclick="uploadSiswa()" class="btn btn-dark w-100">Import Data Siswa</button>
+            <button onclick="uploadSiswa()" class="btn btn-dark w-100">Import Excel Siswa</button>
         </div>
-        <div class="card p-0 overflow-hidden"><table class="table mb-0"><thead class="table-light"><tr><th>Nama</th><th>Kelas</th><th>User/Sandi</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="t-siswa"></tbody></table></div>
+        <div class="card p-0 overflow-hidden"><table class="table mb-0"><thead class="table-light"><tr><th>Nama</th><th>Kelas</th><th>Login</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="t-siswa"></tbody></table></div>
+    </div>
+
+    <div id="p-bank" class="hidden">
+        <h4 class="fw-bold mb-4">Bank Soal</h4>
+        <div class="card p-4">
+            <div class="row g-3">
+                <div class="col-md-4"><input type="text" id="bs-mapel" class="form-control" placeholder="Mata Pelajaran"></div>
+                <div class="col-md-2"><input type="text" id="bs-kelas" class="form-control" placeholder="Kelas"></div>
+                <div class="col-md-2"><input type="number" id="bs-durasi" class="form-control" placeholder="Durasi (Menit)"></div>
+                <div class="col-md-2"><input type="date" id="bs-tgl" class="form-control"></div>
+                <div class="col-md-2"><select id="bs-show-nilai" class="form-select"><option value="ya">Tampil Nilai</option><option value="tidak">Sembunyi</option></select></div>
+                <div class="col-12"><input type="file" id="bs-file" class="form-control" accept=".xlsx"></div>
+                <div class="col-12"><button onclick="uploadSoal()" class="btn btn-primary w-100 fw-bold">UPLOAD SOAL</button></div>
+            </div>
+        </div>
+        <div class="card p-0 mt-3 overflow-hidden"><table class="table mb-0"><thead class="table-dark"><tr><th>Mapel</th><th>Kelas</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="t-soal"></tbody></table></div>
+    </div>
+
+    <div id="p-set" class="hidden">
+        <h4 class="fw-bold mb-4">Pengaturan</h4>
+        <div class="card p-4">
+            <div class="row g-3">
+                <div class="col-md-6"><label>Nama Sekolah</label><input type="text" id="set-sekolah" class="form-control"></div>
+                <div class="col-md-6"><label>Nama Aplikasi</label><input type="text" id="set-app" class="form-control"></div>
+                <div class="col-12"><label>URL Logo</label><input type="text" id="set-logo" class="form-control"></div>
+                <div class="col-12"><label>Pesan Curang</label><textarea id="set-pesan" class="form-control"></textarea></div>
+                <div class="col-12"><button onclick="simpanPengaturan()" class="btn btn-primary w-100">SIMPAN</button></div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -134,113 +120,85 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    let dataSiswaGlobal = [];
-    let dataHasilGlobal = [];
+    let dataSiswaGlobal = [], dataHasilGlobal = [];
 
     function show(p) {
-        ['dash','hasil','bank','siswa','set'].forEach(i => { 
-            document.getElementById('p-'+i).classList.add('hidden'); 
-            document.getElementById('n-'+i).classList.remove('active'); 
-        });
-        document.getElementById('p-'+p).classList.remove('hidden'); 
-        document.getElementById('n-'+p).classList.add('active');
+        ['dash','hasil','bank','siswa','set'].forEach(i => { document.getElementById('p-'+i).classList.add('hidden'); document.getElementById('n-'+i).classList.remove('active'); });
+        document.getElementById('p-'+p).classList.remove('hidden'); document.getElementById('n-'+p).classList.add('active');
     }
 
-    // LOAD INITIAL DATA
+    // LOAD DATA
     db.ref('pengaturan').on('value', snap => {
-        const d = snap.val();
-        if(d) {
+        const d = snap.val(); if(d) {
             document.getElementById('set-sekolah').value = d.nama_sekolah || "";
             document.getElementById('set-app').value = d.nama_aplikasi || "";
             document.getElementById('set-logo').value = d.logo_url || "";
             document.getElementById('set-pesan').value = d.pesan_curang || "";
-            document.getElementById('sidebar-sekolah').innerText = d.nama_sekolah || "Administrator";
+            document.getElementById('sidebar-sekolah').innerText = d.nama_sekolah || "Admin";
         }
     });
 
     db.ref('siswa').on('value', snap => {
-        dataSiswaGlobal = []; let setKelas = new Set();
-        snap.forEach(s => { const v = s.val(); v.key = s.key; dataSiswaGlobal.push(v); setKelas.add(v.kelas); });
-        updateDropdown('mon-f-kelas', Array.from(setKelas));
-        updateDropdown('f-kelas', Array.from(setKelas));
-        renderSiswa();
+        dataSiswaGlobal = []; let k = new Set();
+        snap.forEach(s => { const v = s.val(); v.key = s.key; dataSiswaGlobal.push(v); k.add(v.kelas); });
+        updateDropdown('mon-f-kelas', Array.from(k)); updateDropdown('f-kelas', Array.from(k)); renderSiswa();
     });
 
     db.ref('bank_soal').on('value', snap => {
-        let setMapel = new Set(); let h = "";
+        let m = new Set(); let h = "";
         snap.forEach(c => {
-            const v = c.val(); v.key = c.key; setMapel.add(v.mapel);
-            let st = v.status === 'aktif' ? '<span class="badge bg-success">Aktif</span>' : '<span class="badge bg-secondary">Off</span>';
-            h += `<tr><td>${v.mapel}</td><td>${v.kelas}</td><td>${st}</td><td><button onclick="db.ref('bank_soal/${v.key}').update({status:'aktif'})" class="btn btn-xs btn-outline-success">On</button> <button onclick="db.ref('bank_soal/${v.key}').update({status:'nonaktif'})" class="btn btn-xs btn-outline-secondary">Off</button> <button onclick="hapusData('bank_soal/${v.key}')" class="btn btn-xs btn-danger">X</button></td></tr>`;
+            const v = c.val(); v.key = c.key; m.add(v.mapel);
+            h += `<tr><td>${v.mapel}</td><td>${v.kelas}</td><td>${v.status}</td><td><button onclick="db.ref('bank_soal/${v.key}').remove()" class="btn btn-xs btn-danger">Hapus</button></td></tr>`;
         });
         document.getElementById('t-soal').innerHTML = h;
-        updateDropdown('mon-f-mapel', Array.from(setMapel));
-        updateDropdown('f-mapel', Array.from(setMapel));
+        updateDropdown('mon-f-mapel', Array.from(m)); updateDropdown('f-mapel', Array.from(m));
     });
 
-    db.ref('hasil').on('value', snap => {
-        dataHasilGlobal = []; snap.forEach(c => { dataHasilGlobal.push({ ...c.val(), key: c.key }); });
-    });
+    db.ref('hasil').on('value', snap => { dataHasilGlobal = []; snap.forEach(c => dataHasilGlobal.push({...c.val(), key:c.key})); });
 
-    // RENDER FUNCTIONS (MANUAL TRIGGER)
+    // FUNCTIONS
     function renderMonitoring() {
         const fk = document.getElementById('mon-f-kelas').value;
         const fm = document.getElementById('mon-f-mapel').value;
-        if(!fk) return Swal.fire('Info', 'Pilih kelas terlebih dahulu', 'info');
-        
+        if(!fk) return Swal.fire('Info','Pilih Kelas','info');
         let h = "";
         dataSiswaGlobal.filter(s => s.kelas === fk).forEach(s => {
-            const sudahSelesai = dataHasilGlobal.some(h => h.nama === s.nama && (fm === "" || h.mapel === fm));
-            let badge = s.status === 'curang' ? '<span class="badge bg-danger">CURANG</span>' : (sudahSelesai ? '<span class="badge bg-primary">SELESAI</span>' : '<span class="badge bg-success">AKTIF</span>');
-            h += `<tr><td><span class="status-dot ${s.status === 'curang' ? 'bg-danger' : (sudahSelesai ? 'bg-primary' : 'bg-success')}"></span>${s.nama}</td><td>${s.kelas}</td><td>${badge}</td><td><small class="text-danger">${s.waktu_curang || '-'}</small></td><td><button onclick="db.ref('siswa/${s.key}').update({status:'aktif', waktu_curang:null})" class="btn btn-xs btn-warning">Reset</button></td></tr>`;
+            const selesai = dataHasilGlobal.some(d => d.nama === s.nama && (fm==="" || d.mapel === fm));
+            let st = s.status==='curang'?'bg-danger':(selesai?'bg-primary':'bg-success');
+            h += `<tr><td><span class="status-dot ${st}"></span>${s.nama}</td><td>${s.kelas}</td><td>${s.status==='curang'?'CURANG':(selesai?'SELESAI':'AKTIF')}</td><td>${s.waktu_curang||'-'}</td><td><button onclick="db.ref('siswa/${s.key}').update({status:'aktif',waktu_curang:null})" class="btn btn-xs btn-warning">Reset</button></td></tr>`;
         });
         document.getElementById('list-monitoring').innerHTML = h;
     }
 
     function renderHasil() {
-        const fk = document.getElementById('f-kelas').value;
-        const fm = document.getElementById('f-mapel').value;
-        if(!fk || !fm) return Swal.fire('Info', 'Pilih Kelas dan Mapel', 'info');
-
-        let h = ""; let count = 0;
+        const fk = document.getElementById('f-kelas').value, fm = document.getElementById('f-mapel').value;
+        if(!fk || !fm) return Swal.fire('Info','Pilih Kelas & Mapel','info');
+        let h = "", c = 0;
         dataHasilGlobal.filter(d => d.kelas === fk && d.mapel === fm).forEach(v => {
-            count++;
-            h += `<tr><td>${v.nama}</td><td>${v.kelas}</td><td>${v.mapel}</td><td><b>${v.nilai}</b></td><td>${v.waktu}</td><td><button onclick="hapusData('hasil/${v.key}')" class="btn btn-xs btn-danger">Hapus</button></td></tr>`;
+            c++; h += `<tr><td>${v.nama}</td><td>${v.kelas}</td><td>${v.mapel}</td><td>${v.nilai}</td><td>${v.waktu}</td><td><button onclick="db.ref('hasil/${v.key}').remove()" class="btn btn-xs btn-danger">Hapus</button></td></tr>`;
         });
-        document.getElementById('list-hasil').innerHTML = h;
-        document.getElementById('count-hasil').innerText = count;
-        if(count === 0) Swal.fire('Kosong', 'Tidak ada data hasil untuk filter ini', 'warning');
+        document.getElementById('list-hasil').innerHTML = h; document.getElementById('count-hasil').innerText = c;
+    }
+
+    function addManualSiswa() {
+        const n = document.getElementById('m-nama').value, k = document.getElementById('m-kelas').value, u = document.getElementById('m-user').value, p = document.getElementById('m-pass').value;
+        if(!n || !k || !u || !p) return Swal.fire('Gagal','Lengkapi Form','error');
+        db.ref('siswa').push({ nama:n, kelas:k, username:u, sandi:p, status:"aktif" }).then(() => {
+            Swal.fire('Berhasil','','success'); document.getElementById('m-nama').value="";
+        });
     }
 
     function renderSiswa() {
         let h = "";
         dataSiswaGlobal.forEach(v => {
-            h += `<tr><td>${v.nama}</td><td>${v.kelas}</td><td>${v.username} / ${v.sandi}</td><td>${v.status}</td><td><button onclick="hapusData('siswa/${v.key}')" class="btn btn-xs btn-danger">Hapus</button></td></tr>`;
+            h += `<tr><td>${v.nama}</td><td>${v.kelas}</td><td>${v.username}/${v.sandi}</td><td>${v.status}</td><td><button onclick="db.ref('siswa/${v.key}').remove()" class="btn btn-xs btn-danger">Hapus</button></td></tr>`;
         });
         document.getElementById('t-siswa').innerHTML = h;
     }
 
-    // HELPERS
     function updateDropdown(id, data) {
-        const el = document.getElementById(id); const cur = el.value;
-        let h = `<option value="">-- Pilih --</option>`;
-        data.sort().forEach(v => { h += `<option value="${v}">${v}</option>`; });
-        el.innerHTML = h; el.value = cur;
-    }
-
-    function resetFilterHasil() { 
-        document.getElementById('f-kelas').value = ""; 
-        document.getElementById('f-mapel').value = ""; 
-        document.getElementById('list-hasil').innerHTML = "";
-        document.getElementById('count-hasil').innerText = "0";
-    }
-
-    function exportHasil() {
-        const table = document.getElementById("table-hasil");
-        if(table.rows.length <= 1) return Swal.fire('Gagal', 'Tampilkan data dulu sebelum export', 'error');
-        const clone = table.cloneNode(true);
-        clone.querySelectorAll('tr').forEach(tr => { if(tr.lastElementChild) tr.removeChild(tr.lastElementChild); });
-        XLSX.writeFile(XLSX.utils.table_to_book(clone), `Hasil_${document.getElementById('f-mapel').value}_${document.getElementById('f-kelas').value}.xlsx`);
+        const el = document.getElementById(id); let h = `<option value="">-- Pilih --</option>`;
+        data.sort().forEach(v => h += `<option value="${v}">${v}</option>`); el.innerHTML = h;
     }
 
     function simpanPengaturan() {
@@ -249,34 +207,23 @@
             nama_aplikasi: document.getElementById('set-app').value,
             logo_url: document.getElementById('set-logo').value,
             pesan_curang: document.getElementById('set-pesan').value
-        }).then(() => Swal.fire('Berhasil', 'Pengaturan disimpan', 'success'));
-    }
-
-    function hapusData(path) {
-        Swal.fire({ title: 'Hapus?', icon: 'warning', showCancelButton: true }).then(r => { if(r.isConfirmed) db.ref(path).remove(); });
+        }).then(() => Swal.fire('Ok','Tersimpan','success'));
     }
 
     function uploadSoal() {
         const m = document.getElementById('bs-mapel').value, k = document.getElementById('bs-kelas').value, f = document.getElementById('bs-file').files[0];
-        if(!m || !f) return Swal.fire('Error', 'Isi Mapel & Pilih File', 'error');
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const data = new Uint8Array(e.target.result), wb = XLSX.read(data, {type: 'array'}), json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-            const soalFormatted = json.map(r => ({ pertanyaan: r.pertanyaan||"", gambar: r.url_gambar||"", opsi_a: r.opsi_a||"", opsi_b: r.opsi_b||"", opsi_c: r.opsi_c||"", opsi_d: r.opsi_d||"", kunci: r.kunci||"", tipe: r.tipe_soal||"pilihan_ganda" }));
-            db.ref('bank_soal').push({ mapel:m, kelas:k, durasi:document.getElementById('bs-durasi').value, tanggal:document.getElementById('bs-tgl').value, showNilai: document.getElementById('bs-show-nilai').value, soal: soalFormatted, status: "aktif" }).then(() => Swal.fire('Selesai','Soal terupload','success'));
-        };
-        reader.readAsArrayBuffer(f);
+        if(!m || !f) return;
+        const r = new FileReader(); r.onload = (e) => {
+            const d = new Uint8Array(e.target.result), wb = XLSX.read(d, {type:'array'}), j = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+            const format = j.map(x => ({ pertanyaan:x.pertanyaan, gambar:x.url_gambar||"", opsi_a:x.opsi_a, opsi_b:x.opsi_b, opsi_c:x.opsi_c, opsi_d:x.opsi_d, kunci:x.kunci, tipe:x.tipe_soal||"pilihan_ganda" }));
+            db.ref('bank_soal').push({ mapel:m, kelas:k, durasi:document.getElementById('bs-durasi').value, tanggal:document.getElementById('bs-tgl').value, showNilai:document.getElementById('bs-show-nilai').value, soal:format, status:"aktif" }).then(()=>Swal.fire('Ok','','success'));
+        }; r.readAsArrayBuffer(f);
     }
 
-    function uploadSiswa() {
-        const f = document.getElementById('s-file').files[0]; if(!f) return;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const data = new Uint8Array(e.target.result), wb = XLSX.read(data, {type: 'array'}), json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-            json.forEach(i => { if(i.nama) db.ref('siswa').push({ nama: i.nama, kelas: i.kelas, username: i.username, sandi: i.sandi, status: "aktif" }); });
-            Swal.fire('Sukses','Import selesai','success');
-        };
-        reader.readAsArrayBuffer(f);
+    function exportHasil() {
+        const t = document.getElementById("table-hasil"); if(t.rows.length <= 1) return;
+        const c = t.cloneNode(true); c.querySelectorAll('tr').forEach(r => r.removeChild(r.lastElementChild));
+        XLSX.writeFile(XLSX.utils.table_to_book(c), `Hasil_${document.getElementById('f-mapel').value}.xlsx`);
     }
 </script>
 </body>
